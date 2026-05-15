@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "ninja",
     # Local apps
     "catalog",
+    "importer",
 ]
 
 MIDDLEWARE = [

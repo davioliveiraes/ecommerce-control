@@ -81,18 +81,36 @@ API disponível em:
 - `http://localhost:8000/api/docs` — documentação Swagger
 - `http://localhost:8000/admin/` — admin Django
 
+### Importação da planilha
+
+```powershell
+# Coloque a planilha em backend/data/ (gitignored)
+cd backend
+
+# Simulação (rollback ao final)
+python manage.py importar_planilha data\sua_planilha.xlsx --dry-run
+
+# Importação real
+python manage.py importar_planilha data\sua_planilha.xlsx
+```
+
+- SKUs novos são criados; existentes são atualizados (planilha é fonte da verdade).
+- Linhas com erro são puladas e listadas no relatório.
+- Marca e subcategoria não são preenchidas pelo importador — associar manualmente via admin.
+
 ## Roadmap
 
 - [x] **Fase 0** — Estrutura base do monorepo
 - [x] **Fase 1** — Setup do backend (Django + Django Ninja)
 - [x] **Fase 2** — Modelagem do domínio `catalog`
-- [ ] **Fase 3** — Modelagem do domínio `finance`
-- [ ] **Fase 4** — Endpoints da API
-- [ ] **Fase 5** — Setup do frontend React + Vite
-- [ ] **Fase 6** — Tela hub e navegação
-- [ ] **Fase 7** — Módulo Catálogo (AG Grid)
-- [ ] **Fase 8** — Módulo Finance (dashboards)
-- [ ] **Fase 9** — Deploy
+- [x] **Fase 3** — Importador da planilha xlsx
+- [ ] **Fase 4** — Modelagem do domínio `finance`
+- [ ] **Fase 5** — Endpoints da API
+- [ ] **Fase 6** — Setup do frontend React + Vite
+- [ ] **Fase 7** — Tela hub e navegação
+- [ ] **Fase 8** — Módulo Catálogo (AG Grid)
+- [ ] **Fase 9** — Módulo Finance (dashboards)
+- [ ] **Fase 10** — Deploy
 
 ## Convenções
 
