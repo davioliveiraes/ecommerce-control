@@ -142,3 +142,7 @@ sandbox/
 # ============================
 *.log
 logs/
+
+# Claude
+resume_claude.txt
+.claude
