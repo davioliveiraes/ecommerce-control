@@ -10,13 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@tanstack/react-query": "^5.100.10",
     "ag-grid-community": "^35.3.0",
     "ag-grid-react": "^35.3.0",
     "axios": "^1.16.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.15.1"
+    "react-hook-form": "^7.76.0",
+    "react-router-dom": "^7.15.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

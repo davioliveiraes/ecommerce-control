@@ -18,7 +18,7 @@ export function AcoesCellRenderer(params: ICellRendererParams<Variacao>) {
   if (!params.data) return null
 
   const handleEditar = () => {
-    navigate(`/catalogo/produtos/${params.data!.produto_id}/editar`)
+    navigate(`/catalogo/produto/${params.data!.produto_id}`)
   }
 
   const handleArquivar = () => {
@@ -32,7 +32,7 @@ export function AcoesCellRenderer(params: ICellRendererParams<Variacao>) {
     <div className="flex items-center gap-1 h-full">
       <button
         onClick={handleEditar}
-        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-black hover:text-orange hover:bg-orange-soft transition-colors"
+        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-black hover:text-orange hover:bg-orange-soft transition-colors cursor-pointer"
         title="Editar produto"
       >
         <IconPencil />
@@ -41,7 +41,7 @@ export function AcoesCellRenderer(params: ICellRendererParams<Variacao>) {
       <button
         onClick={handleArquivar}
         disabled={archiveMutation.isPending}
-        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-orange hover:bg-orange-soft transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-orange hover:bg-orange-soft transition-colors disabled:opacity-50 cursor-pointer"
         title="Arquivar variação (soft delete)"
       >
         <IconArchive />

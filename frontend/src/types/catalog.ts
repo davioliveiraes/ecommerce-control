@@ -21,3 +21,70 @@ export interface Variacao {
   criado_em: string
   atualizado_em: string
 }
+
+export interface Marca {
+  id: number
+  nome: string
+  slug: string
+  ativo: boolean
+}
+
+export interface Categoria {
+  id: number
+  nome: string
+  slug: string
+  ativo: boolean
+}
+
+export interface Subcategoria {
+  id: number
+  nome: string
+  slug: string
+  categoria_id: number
+  categoria_nome: string
+  ativo: boolean
+}
+
+export interface Produto {
+  id: number
+  nome_gestaoclick: string
+  nome_site: string
+  descricao_produto_gestaoclick: string
+  descricao_produto_site: string
+  marca_id: number | null
+  marca_nome: string | null
+  subcategoria_id: number | null
+  subcategoria_nome: string | null
+  ativo: boolean
+  criado_em: string
+  atualizado_em: string
+}
+
+export interface VariacaoComposta {
+  id?: number
+  sku_nuvemshop: string
+  id_gestaoclick: string
+  codigo_barras: string
+  descricao: string
+  custo: string
+  preco_loja: string
+  preco_site: string | null
+  status_nuvemshop: Status
+  status_integracao: Status
+  ativo: boolean
+}
+
+export interface ProdutoComVariacoesPayload {
+  nome_gestaoclick: string
+  nome_site: string
+  descricao_produto_gestaoclick: string
+  descricao_produto_site: string
+  marca_id: number | null
+  subcategoria_id: number | null
+  variacoes: VariacaoComposta[]
+}
+
+export interface ProdutoComVariacoesResponse {
+  produto: Produto
+  variacoes: Variacao[]
+}

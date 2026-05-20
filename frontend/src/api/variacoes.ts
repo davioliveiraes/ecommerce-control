@@ -12,6 +12,20 @@ export async function fetchVariacoes(params?: {
   return response.data
 }
 
+export async function fetchVariacao(id: number): Promise<Variacao> {
+  const response = await apiClient.get<Variacao>(`/catalog/variacoes/${id}`)
+  return response.data
+}
+
+export async function fetchVariacoesPorProduto(
+  produtoId: number,
+): Promise<Variacao[]> {
+  const response = await apiClient.get<Variacao[]>('/catalog/variacoes/', {
+    params: { produto_id: produtoId, inativos: true },
+  })
+  return response.data
+}
+
 export async function archiveVariacao(id: number): Promise<Variacao> {
   const response = await apiClient.post<Variacao>(
     `/catalog/variacoes/${id}/archive`,
