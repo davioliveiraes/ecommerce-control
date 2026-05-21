@@ -13,6 +13,8 @@ import { CatalogoPage } from './pages/CatalogoPage'
 import { ProdutoEditorPage } from './pages/ProdutoEditorPage'
 import { VariacaoRedirect } from './pages/VariacaoRedirect'
 import { FinancePage } from './pages/FinancePage'
+import { LancamentosFinanceirosPage } from './pages/LancamentosFinanceirosPage'
+import { LancamentoFinanceiroEditorPage } from './pages/LancamentoFinanceiroEditorPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,6 +54,15 @@ const router = createBrowserRouter([
       },
       { path: '/catalogo/variacao/:id', element: <VariacaoRedirect /> },
       { path: '/finance', element: <FinancePage /> },
+      { path: '/finance/lancamentos', element: <LancamentosFinanceirosPage /> },
+      {
+        path: '/finance/lancamentos/novo',
+        element: <LancamentoFinanceiroEditorPage />,
+      },
+      {
+        path: '/finance/lancamentos/:id/editar',
+        element: <LancamentoFinanceiroEditorPage />,
+      },
     ],
   },
 ])

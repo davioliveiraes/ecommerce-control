@@ -18,7 +18,10 @@ export function Topbar() {
 
         <nav className="flex items-stretch gap-1">
           {NAV.map((item) => {
-            const active = pathname === item.to
+            const active =
+              item.to === '/'
+                ? pathname === item.to
+                : pathname === item.to || pathname.startsWith(`${item.to}/`)
             return (
               <Link
                 key={item.to}

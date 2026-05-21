@@ -7,6 +7,11 @@ from catalog.routers import (
     produto_router,
     variacao_router,
 )
+from finance.routers import (
+    categoria_router as finance_categoria_router,
+    lancamento_router as finance_lancamento_router,
+    dashboard_router as finance_dashboard_router,
+)
 
 api = NinjaAPI(
     title="Ibeize Ecommerce Control API",
@@ -26,3 +31,7 @@ api.add_router("/catalog/categorias", categoria_router)
 api.add_router("/catalog/subcategorias", subcategoria_router)
 api.add_router("/catalog/produtos", produto_router)
 api.add_router("/catalog/variacoes", variacao_router)
+
+api.add_router("/finance/categorias", finance_categoria_router)
+api.add_router("/finance/lancamentos", finance_lancamento_router)
+api.add_router("/finance/dashboard", finance_dashboard_router)
