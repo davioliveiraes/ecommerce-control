@@ -32,11 +32,39 @@ class FatiaCategoria(Schema):
     valor: Decimal
 
 
+class MetricaReceitaVendas(Schema):
+    chave: str
+    nome: str
+    receita: Decimal
+    vendas: int
+
+
 class DashboardResponse(Schema):
     kpis: KpiCard
     serie_mensal: List[PontoMensal]
+    receitas_por_categoria: List[FatiaCategoria]
     despesas_por_categoria: List[FatiaCategoria]
     custos_por_categoria: List[FatiaCategoria]
+    receita_vendas_por_forma_pagamento: List[MetricaReceitaVendas]
+    receita_vendas_por_meio_pagamento: List[MetricaReceitaVendas]
+    receita_vendas_por_parcelas: List[MetricaReceitaVendas]
+
+
+FORMA_PAGAMENTO_LABELS = {
+    "PIX": "Pix",
+    "CARTAO_CREDITO": "Cartão de crédito",
+    "BOLETO": "Boleto",
+    "NUVEMPAGO": "NuvemPago",
+    "OUTRO": "Outro",
+}
+
+MEIO_PAGAMENTO_LABELS = {
+    "NUVEMPAGO": "NuvemPago",
+    "MERCADO_PAGO": "Mercado Pago",
+    "PAGSEGURO": "PagSeguro",
+    "MANUAL": "Manual",
+    "OUTRO": "Outro",
+}
 
 
 @router.get("/", response=DashboardResponse)
@@ -44,6 +72,7 @@ def dashboard(
     request,
     data_inicio: Optional[date] = None,
     data_fim: Optional[date] = None,
+    categoria_id: Optional[int] = None,
     incluir_pendentes: bool = False,
 ):
     """
@@ -60,8 +89,9 @@ def dashboard(
         qs = qs.filter(data_lancamento__gte=data_inicio)
     if data_fim is not None:
         qs = qs.filter(data_lancamento__lte=data_fim)
+    if categoria_id is not None:
+        qs = qs.filter(categoria_id=categoria_id)
 
-    # 1. KPIs
     totais_por_tipo = qs.values("tipo").annotate(total=Sum("valor"))
     mapa_totais = {
         item["tipo"]: item["total"] or Decimal("0") for item in totais_por_tipo
@@ -71,7 +101,6 @@ def dashboard(
     despesa_total = mapa_totais.get("DESPESA", Decimal("0"))
     lucro = receita_total - (custo_total + despesa_total)
 
-    # 2. Série mensal
     serie_dict: dict[str, dict[str, Decimal]] = defaultdict(
         lambda: {
             "custo": Decimal("0"),
@@ -92,7 +121,6 @@ def dashboard(
         for mes, valores in sorted(serie_dict.items())
     ]
 
-    # 3. Pizza por categoria
     def agregar_por_categoria(tipo: str) -> List[FatiaCategoria]:
         agregados = (
             qs.filter(tipo=tipo)
@@ -112,6 +140,37 @@ def dashboard(
             )
         return resultado
 
+    receitas = qs.filter(tipo="RECEITA")
+
+    def agregar_receita_vendas(
+        campo: str,
+        labels: Optional[dict[str, str]] = None,
+    ) -> List[MetricaReceitaVendas]:
+        agregados = (
+            receitas.values(campo)
+            .annotate(receita=Sum("valor"), vendas=Sum("quantidade_vendas"))
+            .order_by("-receita")
+        )
+        resultado = []
+        for item in agregados:
+            chave = item[campo]
+            if chave in (None, ""):
+                chave = "NAO_INFORMADO"
+            nome = labels.get(chave, chave) if labels else str(chave)
+            if campo == "quantidade_parcelas":
+                nome = "Não informado" if chave == "NAO_INFORMADO" else f"{chave}x"
+            elif chave == "NAO_INFORMADO":
+                nome = "Não informado"
+            resultado.append(
+                MetricaReceitaVendas(
+                    chave=str(chave),
+                    nome=nome,
+                    receita=item["receita"] or Decimal("0"),
+                    vendas=item["vendas"] or 0,
+                )
+            )
+        return resultado
+
     return DashboardResponse(
         kpis=KpiCard(
             custo_total=custo_total,
@@ -120,6 +179,16 @@ def dashboard(
             lucro=lucro,
         ),
         serie_mensal=serie_mensal,
+        receitas_por_categoria=agregar_por_categoria("RECEITA"),
         despesas_por_categoria=agregar_por_categoria("DESPESA"),
         custos_por_categoria=agregar_por_categoria("CUSTO"),
+        receita_vendas_por_forma_pagamento=agregar_receita_vendas(
+            "forma_pagamento",
+            FORMA_PAGAMENTO_LABELS,
+        ),
+        receita_vendas_por_meio_pagamento=agregar_receita_vendas(
+            "meio_pagamento",
+            MEIO_PAGAMENTO_LABELS,
+        ),
+        receita_vendas_por_parcelas=agregar_receita_vendas("quantidade_parcelas"),
     )

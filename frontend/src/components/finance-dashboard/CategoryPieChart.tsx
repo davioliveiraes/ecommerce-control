@@ -1,29 +1,51 @@
-import type { FinanceFatiaCategoria } from '../../types/finance'
+import { useState } from 'react'
+
+import type { CategoriaFinanceira, FinanceFatiaCategoria } from '../../types/finance'
 import { formatCurrency } from '../../utils/format'
 
 interface Props {
+  receitas: FinanceFatiaCategoria[]
   despesas: FinanceFatiaCategoria[]
   custos: FinanceFatiaCategoria[]
+  categorias: CategoriaFinanceira[]
+  selectedCategoriaId: number | null
+  onCategoriaChange: (categoriaId: number | null) => void
 }
 
 interface Slice {
   label: string
-  value: number
+  entrada: number
+  saida: number
+  total: number
   color: string
 }
 
 const FALLBACK_COLORS = [
-  '#f97316',
   '#1f4f8f',
+  '#f97316',
   '#111827',
   '#737373',
   '#f59e0b',
   '#2563eb',
 ]
 
-export function CategoryPieChart({ despesas, custos }: Props) {
-  const slices = buildSlices(despesas, custos)
-  const total = slices.reduce((acc, slice) => acc + slice.value, 0)
+export function CategoryPieChart({
+  receitas,
+  despesas,
+  custos,
+  categorias,
+  selectedCategoriaId,
+  onCategoriaChange,
+}: Props) {
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const slices = buildSlices(receitas, despesas, custos)
+  const totalEntradas = slices.reduce((acc, slice) => acc + slice.entrada, 0)
+  const totalSaidas = slices.reduce((acc, slice) => acc + slice.saida, 0)
+  const totalMovimentado = slices.reduce((acc, slice) => acc + slice.total, 0)
+  const activeCategorias = categorias.filter((categoria) => categoria.ativo)
+  const selectedCategoria = activeCategorias.find(
+    (categoria) => categoria.id === selectedCategoriaId,
+  )
 
   return (
     <section className="border border-gray-200 bg-white p-5">
@@ -31,12 +53,57 @@ export function CategoryPieChart({ despesas, custos }: Props) {
         <div>
           <div className="kicker mb-1">Categorias</div>
           <h2 className="font-display text-xl font-semibold text-black">
-            Saídas por categoria
+            Categorias financeiras
           </h2>
         </div>
-        <div className="font-mono text-xs text-gray-600 tabular-nums">
-          {formatCurrency(total)}
+        <div className="text-right font-mono text-xs text-gray-600 tabular-nums">
+          <div>{formatCurrency(totalEntradas)} entradas</div>
+          <div>{formatCurrency(totalSaidas)} saídas</div>
         </div>
+      </div>
+
+      <div className="relative mb-5">
+        <button
+          type="button"
+          aria-haspopup="listbox"
+          aria-expanded={isFilterOpen}
+          onClick={() => setIsFilterOpen((open) => !open)}
+          className="flex w-full items-center justify-between gap-3 border border-gray-200 bg-white px-3 py-2 text-left text-sm text-black hover:border-orange focus:outline-none focus:border-orange transition-colors"
+        >
+          <span className="min-w-0 truncate">
+            {selectedCategoria ? selectedCategoria.nome : 'Todas as categorias'}
+          </span>
+          <IconChevronDown open={isFilterOpen} />
+        </button>
+
+        {isFilterOpen && (
+          <div
+            role="listbox"
+            className="absolute left-0 right-0 top-[calc(100%+6px)] z-20 border border-gray-200 bg-white shadow-lg"
+          >
+            <CategoryOption
+              label="Todas as categorias"
+              active={selectedCategoriaId === null}
+              onClick={() => {
+                onCategoriaChange(null)
+                setIsFilterOpen(false)
+              }}
+            />
+
+            {activeCategorias.map((categoria) => (
+              <CategoryOption
+                key={categoria.id}
+                label={categoria.nome}
+                color={categoria.cor_hex}
+                active={selectedCategoriaId === categoria.id}
+                onClick={() => {
+                  onCategoriaChange(categoria.id)
+                  setIsFilterOpen(false)
+                }}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {slices.length === 0 ? (
@@ -48,17 +115,21 @@ export function CategoryPieChart({ despesas, custos }: Props) {
           <svg
             viewBox="0 0 220 220"
             role="img"
-            aria-label="Distribuição de custos e despesas por categoria"
+            aria-label="Distribuição financeira por categoria"
             className="w-full max-w-[260px] mx-auto"
           >
             <circle cx="110" cy="110" r="76" fill="#fafafa" />
             {slices.map((slice, index) => {
-              const dashArray = `${(slice.value / total) * 100} ${100 - (slice.value / total) * 100}`
+              const dashArray = `${(slice.total / totalMovimentado) * 100} ${
+                100 - (slice.total / totalMovimentado) * 100
+              }`
               const offset =
                 -slices
                   .slice(0, index)
-                  .reduce((acc, item) => acc + (item.value / total) * 100, 0) +
-                25
+                  .reduce(
+                    (acc, item) => acc + (item.total / totalMovimentado) * 100,
+                    0,
+                  ) + 25
 
               return (
                 <circle
@@ -84,7 +155,7 @@ export function CategoryPieChart({ despesas, custos }: Props) {
               fontSize="11"
               fontFamily="monospace"
             >
-              saídas
+              categorias
             </text>
             <text
               x="110"
@@ -118,21 +189,18 @@ export function CategoryPieChart({ despesas, custos }: Props) {
                     <div
                       className="h-full"
                       style={{
-                        width: `${(slice.value / total) * 100}%`,
+                        width: `${(slice.total / totalMovimentado) * 100}%`,
                         backgroundColor: slice.color,
                       }}
                     />
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-xs text-black tabular-nums">
-                    {formatCurrency(slice.value)}
+                  <div className="font-mono text-xs text-navy tabular-nums">
+                    + {formatCurrency(slice.entrada)}
                   </div>
-                  <div className="font-mono text-[10px] text-gray-600">
-                    {new Intl.NumberFormat('pt-BR', {
-                      maximumFractionDigits: 1,
-                    }).format((slice.value / total) * 100)}
-                    %
+                  <div className="font-mono text-xs text-orange-dark tabular-nums">
+                    - {formatCurrency(slice.saida)}
                   </div>
                 </div>
               </div>
@@ -144,13 +212,72 @@ export function CategoryPieChart({ despesas, custos }: Props) {
   )
 }
 
+function CategoryOption({
+  label,
+  color,
+  active,
+  onClick,
+}: {
+  label: string
+  color?: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={active}
+      onClick={onClick}
+      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+        active
+          ? 'bg-orange-soft text-orange-dark'
+          : 'text-gray-700 hover:bg-gray-50 hover:text-black'
+      }`}
+    >
+      {color ? (
+        <span
+          className="h-2.5 w-2.5 shrink-0"
+          style={{ backgroundColor: color }}
+        />
+      ) : (
+        <span className="h-2.5 w-2.5 shrink-0 border border-gray-300 bg-white" />
+      )}
+      <span className="min-w-0 truncate">{label}</span>
+    </button>
+  )
+}
+
+function IconChevronDown({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`}
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  )
+}
+
 function buildSlices(
+  receitas: FinanceFatiaCategoria[],
   despesas: FinanceFatiaCategoria[],
   custos: FinanceFatiaCategoria[],
 ): Slice[] {
   const map = new Map<string, Slice>()
 
-  ;[...despesas, ...custos].forEach((item, index) => {
+  const addItem = (
+    item: FinanceFatiaCategoria,
+    index: number,
+    field: 'entrada' | 'saida',
+  ) => {
     const label = item.categoria_nome || 'Sem categoria'
     const previous = map.get(label)
     const value = parseFloat(item.valor)
@@ -158,13 +285,20 @@ function buildSlices(
 
     map.set(label, {
       label,
-      value: (previous?.value || 0) + value,
+      entrada: (previous?.entrada || 0) + (field === 'entrada' ? value : 0),
+      saida: (previous?.saida || 0) + (field === 'saida' ? value : 0),
+      total: (previous?.total || 0) + value,
       color:
         item.categoria_cor_hex ||
         previous?.color ||
         FALLBACK_COLORS[index % FALLBACK_COLORS.length],
     })
-  })
+  }
 
-  return Array.from(map.values()).sort((a, b) => b.value - a.value)
+  receitas.forEach((item, index) => addItem(item, index, 'entrada'))
+  ;[...despesas, ...custos].forEach((item, index) =>
+    addItem(item, index + receitas.length, 'saida'),
+  )
+
+  return Array.from(map.values()).sort((a, b) => b.total - a.total)
 }

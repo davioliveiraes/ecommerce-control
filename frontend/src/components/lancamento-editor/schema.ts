@@ -14,6 +14,25 @@ export const lancamentoFinanceiroSchema = z.object({
   valor: decimalString,
   data_lancamento: z.string().min(1, 'Data é obrigatória'),
   status: z.enum(['PENDENTE', 'PAGO']),
+  forma_pagamento: z.enum([
+    '',
+    'PIX',
+    'CARTAO_CREDITO',
+    'BOLETO',
+    'NUVEMPAGO',
+    'OUTRO',
+  ]),
+  meio_pagamento: z.enum([
+    '',
+    'NUVEMPAGO',
+    'MERCADO_PAGO',
+    'PAGSEGURO',
+    'MANUAL',
+    'OUTRO',
+  ]),
+  quantidade_parcelas: z.number().int().positive().nullable(),
+  quantidade_vendas: z.number().int().positive(),
+  fonte_trafego: z.string().max(100),
   observacoes: z.string(),
 })
 

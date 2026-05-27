@@ -12,6 +12,11 @@ class LancamentoFinanceiroIn(Schema):
     valor: Decimal
     data_lancamento: date
     status: str = "PENDENTE"
+    forma_pagamento: str = ""
+    meio_pagamento: str = ""
+    quantidade_parcelas: Optional[int] = None
+    quantidade_vendas: int = 1
+    fonte_trafego: str = ""
     observacoes: str = ""
 
 
@@ -25,6 +30,11 @@ class LancamentoFinanceiroOut(Schema):
     valor: Decimal
     data_lancamento: date
     status: str
+    forma_pagamento: str
+    meio_pagamento: str
+    quantidade_parcelas: Optional[int] = None
+    quantidade_vendas: int
+    fonte_trafego: str
     observacoes: str
     ativo: bool
 
@@ -44,5 +54,10 @@ class LancamentoFinanceiroPatch(Schema):
     valor: Optional[Decimal] = None
     data_lancamento: Optional[date] = None
     status: Optional[str] = None
+    forma_pagamento: Optional[str] = None
+    meio_pagamento: Optional[str] = None
+    quantidade_parcelas: Optional[int] = None
+    quantidade_vendas: Optional[int] = None
+    fonte_trafego: Optional[str] = None
     observacoes: Optional[str] = None
     ativo: Optional[bool] = None

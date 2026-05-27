@@ -95,6 +95,42 @@ export function LancamentosFinanceirosGrid() {
         cellRenderer: StatusLancamentoBadgeRenderer,
       },
       {
+        field: 'forma_pagamento',
+        headerName: 'Forma pgto.',
+        minWidth: 150,
+        valueFormatter: (params) => formatFormaPagamento(params.value),
+      },
+      {
+        field: 'meio_pagamento',
+        headerName: 'Meio pgto.',
+        minWidth: 150,
+        valueFormatter: (params) => formatMeioPagamento(params.value),
+      },
+      {
+        field: 'quantidade_parcelas',
+        headerName: 'Parcelas',
+        minWidth: 110,
+        valueFormatter: (params) => (params.value ? `${params.value}x` : '—'),
+        type: 'numericColumn',
+      },
+      {
+        field: 'quantidade_vendas',
+        headerName: 'Vendas',
+        minWidth: 110,
+        valueFormatter: (params) => {
+          if (params.data?.tipo !== 'RECEITA') return ''
+          return params.value ? params.value.toLocaleString('pt-BR') : ''
+        },
+        type: 'numericColumn',
+      },
+      {
+        field: 'fonte_trafego',
+        headerName: 'Fonte tráfego',
+        minWidth: 150,
+        valueFormatter: (params) => params.value || '—',
+        tooltipField: 'fonte_trafego',
+      },
+      {
         field: 'observacoes',
         headerName: 'Observações',
         minWidth: 220,
@@ -260,4 +296,26 @@ export function LancamentosFinanceirosGrid() {
       </div>
     </div>
   )
+}
+
+function formatFormaPagamento(value?: string) {
+  const labels: Record<string, string> = {
+    PIX: 'Pix',
+    CARTAO_CREDITO: 'Cartão de crédito',
+    BOLETO: 'Boleto',
+    NUVEMPAGO: 'NuvemPago',
+    OUTRO: 'Outro',
+  }
+  return value ? labels[value] || value : '—'
+}
+
+function formatMeioPagamento(value?: string) {
+  const labels: Record<string, string> = {
+    NUVEMPAGO: 'NuvemPago',
+    MERCADO_PAGO: 'Mercado Pago',
+    PAGSEGURO: 'PagSeguro',
+    MANUAL: 'Manual',
+    OUTRO: 'Outro',
+  }
+  return value ? labels[value] || value : '—'
 }

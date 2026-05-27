@@ -16,11 +16,19 @@ class DashboardAPITestCase(TestCase):
         self.cat_mkt = CategoriaFinanceira.objects.create(
             nome="Marketing", slug="mkt"
         )
+        self.cat_vendas, _ = CategoriaFinanceira.objects.get_or_create(
+            slug="nuvemshop-nuvempago",
+            defaults={"nome": "NuvemShop(NuvemPago)"},
+        )
 
         # Maio: 100 receita, 30 custo, 20 despesa = lucro 50
         LancamentoFinanceiro.objects.create(
             descricao="Venda 1", tipo="RECEITA", valor=Decimal("100"),
+            categoria=self.cat_vendas,
             data_lancamento=date(2026, 5, 1), status="PAGO",
+            forma_pagamento="PIX", meio_pagamento="NUVEMPAGO",
+            quantidade_parcelas=1, quantidade_vendas=2,
+            fonte_trafego="Instagram",
         )
         LancamentoFinanceiro.objects.create(
             descricao="Estoque", tipo="CUSTO", categoria=self.cat_frete,
@@ -69,3 +77,38 @@ class DashboardAPITestCase(TestCase):
         self.assertEqual(len(despesas), 1)
         self.assertEqual(despesas[0]["categoria_nome"], "Marketing")
         self.assertEqual(Decimal(despesas[0]["valor"]), Decimal("20"))
+
+        receitas = data["receitas_por_categoria"]
+        self.assertEqual(len(receitas), 1)
+        self.assertEqual(receitas[0]["categoria_nome"], "NuvemShop(NuvemPago)")
+        self.assertEqual(Decimal(receitas[0]["valor"]), Decimal("100"))
+
+    def test_metricas_pagamento(self):
+        response = self.client.get("/finance/dashboard/")
+        data = response.json()
+
+        forma = data["receita_vendas_por_forma_pagamento"][0]
+        self.assertEqual(forma["chave"], "PIX")
+        self.assertEqual(forma["nome"], "Pix")
+        self.assertEqual(Decimal(forma["receita"]), Decimal("100"))
+        self.assertEqual(forma["vendas"], 2)
+
+        meio = data["receita_vendas_por_meio_pagamento"][0]
+        self.assertEqual(meio["chave"], "NUVEMPAGO")
+        self.assertEqual(meio["nome"], "NuvemPago")
+
+        parcelas = data["receita_vendas_por_parcelas"][0]
+        self.assertEqual(parcelas["chave"], "1")
+        self.assertEqual(parcelas["nome"], "1x")
+
+    def test_filtra_por_categoria(self):
+        response = self.client.get(
+            f"/finance/dashboard/?categoria_id={self.cat_mkt.id}"
+        )
+        data = response.json()
+
+        self.assertEqual(Decimal(data["kpis"]["receita_total"]), Decimal("0"))
+        self.assertEqual(Decimal(data["kpis"]["custo_total"]), Decimal("0"))
+        self.assertEqual(Decimal(data["kpis"]["despesa_total"]), Decimal("20"))
+        self.assertEqual(data["despesas_por_categoria"][0]["categoria_nome"], "Marketing")
+        self.assertEqual(data["receita_vendas_por_forma_pagamento"], [])

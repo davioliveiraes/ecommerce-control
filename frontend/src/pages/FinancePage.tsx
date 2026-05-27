@@ -2,33 +2,43 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
+import { fetchCategoriasFinanceiras } from '../api/categoriasFinanceiras'
 import { fetchFinanceDashboard } from '../api/financeDashboard'
 import { CategoryPieChart } from '../components/finance-dashboard/CategoryPieChart'
 import { DashboardFilters } from '../components/finance-dashboard/DashboardFilters'
 import { KpiCards } from '../components/finance-dashboard/KpiCards'
+import { PaymentStatisticsPanel } from '../components/finance-dashboard/PaymentStatisticsPanel'
 import { TimelineChart } from '../components/finance-dashboard/TimelineChart'
 
 export function FinancePage() {
   const [dataInicio, setDataInicio] = useState(getStartOfCurrentYear())
   const [dataFim, setDataFim] = useState(getTodayInputValue())
   const [incluirPendentes, setIncluirPendentes] = useState(false)
+  const [categoriaId, setCategoriaId] = useState<number | null>(null)
 
   const dashboardQuery = useQuery({
     queryKey: [
       'finance-dashboard',
-      { dataInicio, dataFim, incluirPendentes },
+      { dataInicio, dataFim, incluirPendentes, categoriaId },
     ],
     queryFn: () =>
       fetchFinanceDashboard({
         data_inicio: dataInicio,
         data_fim: dataFim,
+        categoria_id: categoriaId,
         incluir_pendentes: incluirPendentes,
       }),
+  })
+
+  const categoriasQuery = useQuery({
+    queryKey: ['categorias-financeiras'],
+    queryFn: fetchCategoriasFinanceiras,
   })
 
   const clearFilters = () => {
     setDataInicio('')
     setDataFim('')
+    setCategoriaId(null)
     setIncluirPendentes(false)
   }
 
@@ -40,10 +50,10 @@ export function FinancePage() {
           <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
             Dashboard Financeiro
           </h1>
-          <p className="text-sm text-gray-600 mt-1 max-w-3xl">
-            Resultado consolidado dos lançamentos financeiros, com visão mensal
-            e distribuição das saídas por categoria.
-          </p>
+            <p className="text-sm text-gray-600 mt-1 max-w-3xl">
+              Resultado consolidado dos lançamentos financeiros, com visão mensal
+              e estatísticas de categorias e pagamentos.
+            </p>
         </div>
 
         <Link
@@ -91,10 +101,24 @@ export function FinancePage() {
             <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1.45fr)_minmax(360px,0.75fr)] gap-5">
               <TimelineChart data={dashboardQuery.data.serie_mensal} />
               <CategoryPieChart
+                receitas={dashboardQuery.data.receitas_por_categoria}
                 despesas={dashboardQuery.data.despesas_por_categoria}
                 custos={dashboardQuery.data.custos_por_categoria}
+                categorias={categoriasQuery.data || []}
+                selectedCategoriaId={categoriaId}
+                onCategoriaChange={setCategoriaId}
               />
             </div>
+
+            <PaymentStatisticsPanel
+              formaPagamento={
+                dashboardQuery.data.receita_vendas_por_forma_pagamento
+              }
+              meioPagamento={
+                dashboardQuery.data.receita_vendas_por_meio_pagamento
+              }
+              parcelas={dashboardQuery.data.receita_vendas_por_parcelas}
+            />
           </>
         )}
       </div>

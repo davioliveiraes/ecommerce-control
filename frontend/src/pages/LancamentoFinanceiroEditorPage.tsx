@@ -51,6 +51,11 @@ export function LancamentoFinanceiroEditorPage() {
       valor: '',
       data_lancamento: getTodayInputValue(),
       status: 'PENDENTE',
+      forma_pagamento: '',
+      meio_pagamento: '',
+      quantidade_parcelas: null,
+      quantidade_vendas: 1,
+      fonte_trafego: '',
       observacoes: '',
     },
   })
@@ -66,6 +71,11 @@ export function LancamentoFinanceiroEditorPage() {
         valor: lancamentoQuery.data.valor,
         data_lancamento: lancamentoQuery.data.data_lancamento,
         status: lancamentoQuery.data.status,
+        forma_pagamento: lancamentoQuery.data.forma_pagamento,
+        meio_pagamento: lancamentoQuery.data.meio_pagamento,
+        quantidade_parcelas: lancamentoQuery.data.quantidade_parcelas,
+        quantidade_vendas: lancamentoQuery.data.quantidade_vendas,
+        fonte_trafego: lancamentoQuery.data.fonte_trafego,
         observacoes: lancamentoQuery.data.observacoes,
       })
     }

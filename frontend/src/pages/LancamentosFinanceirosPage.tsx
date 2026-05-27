@@ -9,6 +9,14 @@ export function LancamentosFinanceirosPage() {
     <div className="max-w-[1600px] mx-auto px-8 py-6">
       <div className="flex items-start justify-between gap-6 mb-5">
         <div className="min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate('/finance')}
+            className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-orange transition-colors mb-3 font-mono"
+          >
+            <IconArrowLeft />
+            voltar ao dashboard financeiro
+          </button>
           <div className="kicker mb-1.5">Módulo 02</div>
           <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
             Lançamentos Financeiros
@@ -31,6 +39,24 @@ export function LancamentosFinanceirosPage() {
 
       <LancamentosFinanceirosGrid />
     </div>
+  )
+}
+
+function IconArrowLeft() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
+    </svg>
   )
 }
 

@@ -64,7 +64,7 @@ export function LancamentoFinanceiroSection({ categorias }: Props) {
         </div>
 
         <div>
-          <FieldLabel>Categoria</FieldLabel>
+          <FieldLabel>Categoria financeira</FieldLabel>
           <select
             {...register('categoria_id', {
               setValueAs: (value) =>
@@ -94,7 +94,7 @@ export function LancamentoFinanceiroSection({ categorias }: Props) {
         </div>
 
         <div>
-          <FieldLabel required>Data de vencimento</FieldLabel>
+          <FieldLabel required>Data de referência</FieldLabel>
           <input
             type="date"
             {...register('data_lancamento')}
@@ -111,6 +111,74 @@ export function LancamentoFinanceiroSection({ categorias }: Props) {
             <option value="PENDENTE">Pendente</option>
             <option value="PAGO">Pago</option>
           </select>
+        </div>
+
+        <div>
+          <FieldLabel>Quantidade de vendas</FieldLabel>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            {...register('quantidade_vendas', {
+              setValueAs: (value) => Number(value || 1),
+            })}
+            className="form-input font-mono"
+          />
+          {errors.quantidade_vendas && (
+            <FieldError>{errors.quantidade_vendas.message}</FieldError>
+          )}
+        </div>
+
+        <div>
+          <FieldLabel>Forma de pagamento</FieldLabel>
+          <select {...register('forma_pagamento')} className="form-input">
+            <option value="">— Não informado —</option>
+            <option value="PIX">Pix</option>
+            <option value="CARTAO_CREDITO">Cartão de crédito</option>
+            <option value="BOLETO">Boleto</option>
+            <option value="NUVEMPAGO">NuvemPago</option>
+            <option value="OUTRO">Outro</option>
+          </select>
+        </div>
+
+        <div>
+          <FieldLabel>Meio/provedor de pagamento</FieldLabel>
+          <select {...register('meio_pagamento')} className="form-input">
+            <option value="">— Não informado —</option>
+            <option value="NUVEMPAGO">NuvemPago</option>
+            <option value="MERCADO_PAGO">Mercado Pago</option>
+            <option value="PAGSEGURO">PagSeguro</option>
+            <option value="MANUAL">Manual</option>
+            <option value="OUTRO">Outro</option>
+          </select>
+        </div>
+
+        <div>
+          <FieldLabel>Parcelas</FieldLabel>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            placeholder="Ex: 1"
+            {...register('quantidade_parcelas', {
+              setValueAs: (value) =>
+                value === '' || value === null ? null : Number(value),
+            })}
+            className="form-input font-mono"
+          />
+          {errors.quantidade_parcelas && (
+            <FieldError>{errors.quantidade_parcelas.message}</FieldError>
+          )}
+        </div>
+
+        <div>
+          <FieldLabel>Fonte de tráfego</FieldLabel>
+          <input
+            type="text"
+            {...register('fonte_trafego')}
+            className="form-input"
+            placeholder="Ex: Direto, Google, Instagram"
+          />
         </div>
 
         <div className="md:col-span-2">

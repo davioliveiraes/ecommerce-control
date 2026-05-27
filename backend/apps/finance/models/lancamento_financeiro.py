@@ -14,6 +14,22 @@ class StatusLancamento(models.TextChoices):
     PAGO = "PAGO", "Pago"
 
 
+class FormaPagamento(models.TextChoices):
+    PIX = "PIX", "Pix"
+    CARTAO_CREDITO = "CARTAO_CREDITO", "Cartão de crédito"
+    BOLETO = "BOLETO", "Boleto"
+    NUVEMPAGO = "NUVEMPAGO", "NuvemPago"
+    OUTRO = "OUTRO", "Outro"
+
+
+class MeioPagamento(models.TextChoices):
+    NUVEMPAGO = "NUVEMPAGO", "NuvemPago"
+    MERCADO_PAGO = "MERCADO_PAGO", "Mercado Pago"
+    PAGSEGURO = "PAGSEGURO", "PagSeguro"
+    MANUAL = "MANUAL", "Manual"
+    OUTRO = "OUTRO", "Outro"
+
+
 class LancamentoFinanceiro(TimestampedModel, SoftDeleteModel):
     descricao = models.CharField(max_length=255, verbose_name="descrição")
     tipo = models.CharField(
@@ -42,6 +58,36 @@ class LancamentoFinanceiro(TimestampedModel, SoftDeleteModel):
         default=StatusLancamento.PENDENTE,
         verbose_name="status",
     )
+    forma_pagamento = models.CharField(
+        max_length=20,
+        choices=FormaPagamento.choices,
+        blank=True,
+        default="",
+        verbose_name="forma de pagamento",
+    )
+    meio_pagamento = models.CharField(
+        max_length=20,
+        choices=MeioPagamento.choices,
+        blank=True,
+        default="",
+        verbose_name="meio/provedor de pagamento",
+    )
+    quantidade_parcelas = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name="quantidade de parcelas",
+    )
+    quantidade_vendas = models.PositiveIntegerField(
+        default=1,
+        verbose_name="quantidade de vendas",
+        help_text="Quantidade de vendas agregadas neste lançamento. Use 1 para lançamento individual.",
+    )
+    fonte_trafego = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        verbose_name="fonte de tráfego",
+    )
     observacoes = models.TextField(blank=True, default="", verbose_name="observações")
 
     class Meta:
@@ -51,6 +97,9 @@ class LancamentoFinanceiro(TimestampedModel, SoftDeleteModel):
         indexes = [
             models.Index(fields=["tipo", "data_lancamento"]),
             models.Index(fields=["status", "data_lancamento"]),
+            models.Index(fields=["forma_pagamento", "data_lancamento"]),
+            models.Index(fields=["meio_pagamento", "data_lancamento"]),
+            models.Index(fields=["fonte_trafego", "data_lancamento"]),
         ]
 
     def __str__(self):
