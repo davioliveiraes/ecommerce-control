@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export function LoginPage() {
-  useDocumentTitle('Login — Ibeize Ecommerce Control')
+  useDocumentTitle('Login — Controle Interno Site Ibeize')
 
   const { isAuthenticated, isLoading, login } = useAuth()
   const navigate = useNavigate()

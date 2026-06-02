@@ -17,7 +17,7 @@ from finance.routers import (
 from reports.routers import catalog_report_router, finance_report_router
 
 api = NinjaAPI(
-    title="Ibeize Ecommerce Control API",
+    title="Controle Interno Site Ibeize API",
     version="1.0.0",
     description="API interna para gerenciamento de catálogo e finanças.",
 )

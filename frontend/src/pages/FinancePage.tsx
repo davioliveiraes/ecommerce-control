@@ -20,7 +20,7 @@ import type { FinancePeriodoCategoria, TipoLancamento } from '../types/finance'
 import { COLUNAS_FINANCE } from '../types/reports'
 
 export function FinancePage() {
-  useDocumentTitle('Finance — Ibeize Ecommerce Control')
+  useDocumentTitle('Finance — Site Ibeize')
 
   const [dataInicio, setDataInicio] = useState(getStartOfCurrentYear())
   const [dataFim, setDataFim] = useState(getTodayInputValue())

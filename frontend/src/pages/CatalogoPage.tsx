@@ -4,7 +4,7 @@ import { CatalogoGrid } from '../components/catalogo/CatalogoGrid'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export function CatalogoPage() {
-  useDocumentTitle('Catálogo — Ibeize Ecommerce Control')
+  useDocumentTitle('Catálogo — Site Ibeize')
 
   return (
     <div className="max-w-[1600px] mx-auto px-8 py-6">
@@ -12,10 +12,10 @@ export function CatalogoPage() {
         <div className="min-w-0">
           <div className="kicker mb-1.5">Módulo 01</div>
           <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
-            Ibeize Catálogo
+            Catálogo — Site Ibeize
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            Gestão dos produtos, variações, preços e integração da loja Ibeize.
+            Gestão dos produtos, variações, preços e integração do Site Ibeize.
           </p>
         </div>
 

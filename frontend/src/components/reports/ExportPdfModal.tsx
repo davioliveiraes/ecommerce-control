@@ -53,7 +53,7 @@ export function ExportPdfModal({
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
           <div>
-            <div className="kicker mb-1">Ibeize Ecommerce Control</div>
+            <div className="kicker mb-1">Controle Interno — Site Ibeize</div>
             <h2 className="font-display text-xl font-semibold text-black">
               {titulo}
             </h2>
