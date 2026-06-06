@@ -10,19 +10,19 @@ const KPI_CONFIG = [
     key: 'receita_total',
     label: 'Receitas',
     description: 'Entradas no período',
-    tone: 'text-navy',
+    tone: 'text-black',
   },
   {
     key: 'custo_total',
     label: 'Custos',
     description: 'Custos operacionais',
-    tone: 'text-orange-dark',
+    tone: 'text-gray-700',
   },
   {
     key: 'despesa_total',
     label: 'Despesas',
     description: 'Saídas administrativas',
-    tone: 'text-orange-dark',
+    tone: 'text-gray-700',
   },
   {
     key: 'lucro',
@@ -41,8 +41,8 @@ export function KpiCards({ kpis }: Props) {
         const tone =
           item.key === 'lucro'
             ? numericValue < 0
-              ? 'text-orange-dark'
-              : 'text-navy'
+              ? 'text-gray-500'
+              : 'text-black'
             : item.tone
 
         return (
@@ -73,7 +73,7 @@ function SparkLineMark({ positive }: { positive: boolean }) {
       height="22"
       viewBox="0 0 38 22"
       fill="none"
-      className={positive ? 'text-navy' : 'text-orange'}
+      className={positive ? 'text-black' : 'text-gray-400'}
     >
       <path
         d="M1 17.5 9 10.5l7 4 8-11 13 7"

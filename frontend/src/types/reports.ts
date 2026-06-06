@@ -22,7 +22,17 @@ export const COLUNAS_CATALOGO: ColunaRelatorio[] = [
   { chave: 'custo', label: 'Custo', selecionadaPorPadrao: false },
   { chave: 'preco_loja', label: 'Preço Loja', selecionadaPorPadrao: false },
   { chave: 'preco_site', label: 'Preço Site', selecionadaPorPadrao: true },
+  {
+    chave: 'preco_promocional',
+    label: 'Preço Promocional',
+    selecionadaPorPadrao: false,
+  },
   { chave: 'margem_percentual', label: 'Margem %', selecionadaPorPadrao: false },
+  {
+    chave: 'margem_promocional_percentual',
+    label: 'Margem Promo %',
+    selecionadaPorPadrao: false,
+  },
   {
     chave: 'status_nuvemshop',
     label: 'Status NuvemShop',

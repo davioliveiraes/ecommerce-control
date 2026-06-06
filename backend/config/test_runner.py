@@ -5,7 +5,7 @@ from django.test.runner import DiscoverRunner
 APPS_DIR = Path(__file__).resolve().parent.parent / "apps"
 
 
-class IbeizeTestRunner(DiscoverRunner):
+class AppsTestRunner(DiscoverRunner):
     """Discovery default em `apps/` para evitar import duplicado dos models.
 
     Sem isso, `manage.py test` (sem args) caminha a partir de `backend/` e

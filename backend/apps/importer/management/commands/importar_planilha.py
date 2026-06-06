@@ -7,7 +7,7 @@ from importer.services.importer import ImportadorPlanilha
 
 
 class Command(BaseCommand):
-    help = "Importa produtos e variações da planilha xlsx da Ibeize."
+    help = "Importa produtos e variações de uma planilha xlsx para o catálogo."
 
     def add_arguments(self, parser):
         parser.add_argument("arquivo", type=str, help="Caminho para o arquivo .xlsx.")

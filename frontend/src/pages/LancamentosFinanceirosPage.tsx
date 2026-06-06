@@ -4,7 +4,7 @@ import { LancamentosFinanceirosGrid } from '../components/finance/LancamentosFin
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export function LancamentosFinanceirosPage() {
-  useDocumentTitle('Lançamentos — Ibeize Finance')
+  useDocumentTitle('Lançamentos — {{COMPANY_NAME}} Finance')
 
   const navigate = useNavigate()
 
@@ -15,14 +15,14 @@ export function LancamentosFinanceirosPage() {
           <button
             type="button"
             onClick={() => navigate('/finance')}
-            className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-orange transition-colors mb-3 font-mono"
+            className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-black transition-colors mb-3 font-mono"
           >
             <IconArrowLeft />
             voltar ao dashboard financeiro
           </button>
           <div className="kicker mb-1.5">Módulo 02</div>
           <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
-            Lançamentos — Ibeize Finance
+            Lançamentos — {`{{COMPANY_NAME}}`} Finance
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Entradas e saídas operacionais com status, categoria e ações de
@@ -33,7 +33,7 @@ export function LancamentosFinanceirosPage() {
         <button
           type="button"
           onClick={() => navigate('/finance/lancamentos/novo')}
-          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-orange bg-orange text-white hover:bg-orange-dark hover:border-orange-dark transition-colors shrink-0"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-black bg-black text-white hover:bg-gray-900 hover:border-gray-900 transition-colors shrink-0"
         >
           <IconPlus />
           Novo lançamento

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { FinancePontoMensal, TipoLancamento } from '../../types/finance'
 import { formatCurrency } from '../../utils/format'
 
@@ -6,14 +7,23 @@ interface Props {
   visibleTypes?: TipoLancamento[]
 }
 
+interface HoverState {
+  serieLabel: string
+  mes: string
+  value: number
+  color: string
+  x: number
+  y: number
+}
+
 const WIDTH = 720
 const HEIGHT = 300
 const PADDING = 36
 
 const SERIES = [
-  { key: 'receita', label: 'Receita', color: '#1f4f8f' },
-  { key: 'custo', label: 'Custo', color: '#f97316' },
-  { key: 'despesa', label: 'Despesa', color: '#0a0a0a' },
+  { key: 'receita', label: 'Receita', color: '#0a0a0a' },
+  { key: 'custo', label: 'Custo', color: '#737373' },
+  { key: 'despesa', label: 'Despesa', color: '#a3a3a3' },
 ] as const
 
 const TYPE_TO_SERIES_KEY: Record<TipoLancamento, (typeof SERIES)[number]['key']> = {
@@ -23,6 +33,7 @@ const TYPE_TO_SERIES_KEY: Record<TipoLancamento, (typeof SERIES)[number]['key']>
 }
 
 export function TimelineChart({ data, visibleTypes }: Props) {
+  const [hover, setHover] = useState<HoverState | null>(null)
   const visibleKeys = visibleTypes?.map((tipo) => TYPE_TO_SERIES_KEY[tipo])
   const activeSeries = visibleKeys
     ? SERIES.filter((serie) => visibleKeys.includes(serie.key))
@@ -78,7 +89,7 @@ export function TimelineChart({ data, visibleTypes }: Props) {
       {parsed.length === 0 ? (
         <EmptyChartState message="Sem dados no período selecionado." />
       ) : (
-        <div className="w-full overflow-hidden">
+        <div className="relative w-full">
           <svg
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
             role="img"
@@ -130,15 +141,39 @@ export function TimelineChart({ data, visibleTypes }: Props) {
                     strokeLinejoin="round"
                   />
                   {parsed.map((point, index) => (
-                    <circle
-                      key={`${serie.key}-${point.mes}`}
-                      cx={xFor(index)}
-                      cy={yFor(point[serie.key])}
-                      r="3.5"
-                      fill="white"
-                      stroke={serie.color}
-                      strokeWidth="2"
-                    />
+                    <g key={`${serie.key}-${point.mes}`}>
+                      <circle
+                        cx={xFor(index)}
+                        cy={yFor(point[serie.key])}
+                        r="3.5"
+                        fill="white"
+                        stroke={serie.color}
+                        strokeWidth="2"
+                      />
+                      <circle
+                        cx={xFor(index)}
+                        cy={yFor(point[serie.key])}
+                        r="12"
+                        fill="transparent"
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={(event) => {
+                          const svg = event.currentTarget.ownerSVGElement
+                          if (!svg) return
+                          const rect = svg.getBoundingClientRect()
+                          const scaleX = rect.width / WIDTH
+                          const scaleY = rect.height / HEIGHT
+                          setHover({
+                            serieLabel: serie.label,
+                            mes: point.mes,
+                            value: point[serie.key],
+                            color: serie.color,
+                            x: xFor(index) * scaleX,
+                            y: yFor(point[serie.key]) * scaleY,
+                          })
+                        }}
+                        onMouseLeave={() => setHover(null)}
+                      />
+                    </g>
                   ))}
                 </g>
               )
@@ -158,6 +193,29 @@ export function TimelineChart({ data, visibleTypes }: Props) {
               </text>
             ))}
           </svg>
+
+          {hover && (() => {
+            const flipBelow = hover.y < 70
+            const verticalClass = flipBelow ? '' : '-translate-y-full'
+            const top = flipBelow ? hover.y + 18 : hover.y - 18
+            return (
+              <div
+                className={`pointer-events-none absolute z-10 -translate-x-1/2 border border-black bg-white px-3 py-2 shadow-lg ${verticalClass}`}
+                style={{ left: hover.x, top }}
+              >
+                <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-gray-600">
+                  <span
+                    className="h-2 w-2"
+                    style={{ backgroundColor: hover.color }}
+                  />
+                  {hover.serieLabel} · {formatMonth(hover.mes)}
+                </div>
+                <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-black">
+                  {formatCurrency(hover.value)}
+                </div>
+              </div>
+            )
+          })()}
         </div>
       )}
     </section>

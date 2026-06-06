@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type {
   CategoriaFinanceira,
   FinanceFatiaCategoria,
@@ -33,20 +34,23 @@ interface Slice {
 }
 
 const FALLBACK_COLORS = [
-  '#1f4f8f',
-  '#f97316',
-  '#111827',
+  '#0a0a0a',
+  '#404040',
   '#737373',
-  '#f59e0b',
-  '#2563eb',
+  '#a3a3a3',
+  '#525252',
+  '#262626',
 ]
 
 const CATEGORY_KIND_BY_SLUG: Record<string, TipoLancamento> = {
-  'godaddy-email-profissional': 'DESPESA',
-  'godaddy-hospedagem': 'DESPESA',
-  'nuvemshop-nuvempago': 'RECEITA',
+  'vendas-nuvemshop': 'RECEITA',
   'nuvemshop-plano': 'DESPESA',
-  'salario-analista-ecommerce': 'DESPESA',
+  'hospedagem-dominio': 'DESPESA',
+  'email-profissional': 'DESPESA',
+  'equipe-ecommerce': 'DESPESA',
+  'marketing-trafego': 'DESPESA',
+  'taxas-meios-pagamento': 'DESPESA',
+  'embalagens-frete': 'CUSTO',
 }
 
 const TYPE_LABELS: Record<TipoLancamento, string> = {
@@ -205,12 +209,12 @@ export function CategoryFiltersPanel({
             <SummaryRow
               label="Entrada"
               value={formatCurrency(totalEntradas)}
-              className="text-navy"
+              className="text-black"
             />
             <SummaryRow
               label="Saída"
               value={formatCurrency(totalSaidas)}
-              className="text-orange-dark"
+              className="text-gray-700"
             />
         </div>
       </div>
@@ -225,63 +229,94 @@ function CategoryDonut({
   slices: Slice[]
   totalMovimentado: number
 }) {
-  return (
-    <svg
-      viewBox="0 0 220 220"
-      role="img"
-      aria-label="Distribuição financeira por categoria"
-      className="w-full max-w-[280px] mx-auto"
-    >
-      <circle cx="110" cy="110" r="76" fill="#fafafa" />
-      {slices.map((slice, index) => {
-        const dashArray = `${(slice.total / totalMovimentado) * 100} ${
-          100 - (slice.total / totalMovimentado) * 100
-        }`
-        const offset =
-          -slices
-            .slice(0, index)
-            .reduce(
-              (acc, item) => acc + (item.total / totalMovimentado) * 100,
-              0,
-            ) + 25
+  const [hover, setHover] = useState<{
+    slice: Slice
+    percentual: number
+  } | null>(null)
 
-        return (
-          <circle
-            key={slice.label}
-            cx="110"
-            cy="110"
-            r="76"
-            fill="transparent"
-            stroke={slice.color}
-            strokeWidth="34"
-            strokeDasharray={dashArray}
-            strokeDashoffset={offset}
-            pathLength="100"
-          />
-        )
-      })}
-      <circle cx="110" cy="110" r="48" fill="white" />
-      <text
-        x="110"
-        y="105"
-        textAnchor="middle"
-        className="fill-gray-600"
-        fontSize="11"
-        fontFamily="monospace"
+  return (
+    <div className="relative w-full max-w-[280px] mx-auto">
+      <svg
+        viewBox="0 0 220 220"
+        role="img"
+        aria-label="Distribuição financeira por categoria"
+        className="w-full"
       >
-        categorias
-      </text>
-      <text
-        x="110"
-        y="124"
-        textAnchor="middle"
-        className="fill-black"
-        fontSize="14"
-        fontFamily="monospace"
-      >
-        {slices.length}
-      </text>
-    </svg>
+        <circle cx="110" cy="110" r="76" fill="#fafafa" />
+        {slices.map((slice, index) => {
+          const dashArray = `${(slice.total / totalMovimentado) * 100} ${
+            100 - (slice.total / totalMovimentado) * 100
+          }`
+          const offset =
+            -slices
+              .slice(0, index)
+              .reduce(
+                (acc, item) => acc + (item.total / totalMovimentado) * 100,
+                0,
+              ) + 25
+
+          const percentual = (slice.total / totalMovimentado) * 100
+          return (
+            <circle
+              key={slice.label}
+              cx="110"
+              cy="110"
+              r="76"
+              fill="transparent"
+              stroke={slice.color}
+              strokeWidth="34"
+              strokeDasharray={dashArray}
+              strokeDashoffset={offset}
+              pathLength="100"
+              style={{ cursor: 'pointer' }}
+              onMouseEnter={() => setHover({ slice, percentual })}
+              onMouseLeave={() => setHover(null)}
+            />
+          )
+        })}
+        <circle cx="110" cy="110" r="48" fill="white" pointerEvents="none" />
+        <text
+          x="110"
+          y="105"
+          textAnchor="middle"
+          className="fill-gray-600"
+          fontSize="11"
+          fontFamily="monospace"
+          pointerEvents="none"
+        >
+          categorias
+        </text>
+        <text
+          x="110"
+          y="124"
+          textAnchor="middle"
+          className="fill-black"
+          fontSize="14"
+          fontFamily="monospace"
+          pointerEvents="none"
+        >
+          {slices.length}
+        </text>
+      </svg>
+
+      {hover && (
+        <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 border border-black bg-white px-3 py-2 shadow-lg min-w-[160px]">
+          <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-gray-600">
+            <span
+              className="h-2 w-2"
+              style={{ backgroundColor: hover.slice.color }}
+            />
+            {hover.slice.label}
+          </div>
+          <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-black">
+            {formatCurrency(hover.slice.total)}
+          </div>
+          <div className="font-mono text-[11px] tabular-nums text-gray-600">
+            {hover.percentual.toFixed(1).replace('.', ',')}% do total
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -309,7 +344,10 @@ function CategoryLegend({
             </span>
           </div>
 
-          <div className="mt-2 h-1.5 bg-gray-100">
+          <div
+            className="mt-2 h-1.5 bg-gray-100"
+            title={`${slice.label}: ${formatCurrency(slice.total)} (${((slice.total / totalMovimentado) * 100).toFixed(1).replace('.', ',')}% do total)`}
+          >
             <div
               className="h-full"
               style={{
@@ -324,14 +362,14 @@ function CategoryLegend({
               <LegendAmountRow
                 label="Entrada"
                 value={`+ ${formatCurrency(slice.entrada)}`}
-                className="text-navy"
+                className="text-black"
               />
             )}
             {slice.saida > 0 && (
               <LegendAmountRow
                 label="Saída"
                 value={`- ${formatCurrency(slice.saida)}`}
-                className="text-orange-dark"
+                className="text-gray-700"
               />
             )}
           </div>
@@ -402,7 +440,7 @@ function CategoryOption({
       onClick={onClick}
       className={`flex w-full items-stretch gap-3 px-3 py-2 text-left text-sm transition-colors ${
         active
-          ? 'bg-orange-soft text-orange-dark'
+          ? 'bg-black text-white'
           : 'text-gray-700 hover:bg-gray-50 hover:text-black'
       }`}
     >
@@ -440,8 +478,8 @@ function TypeFilterButton({
       onClick={onClick}
       className={`block w-full border-b border-gray-200 px-3 py-2 text-left transition-colors last:border-b-0 disabled:cursor-not-allowed disabled:opacity-35 ${
         active
-          ? 'bg-orange text-white'
-          : 'bg-white text-gray-700 hover:bg-gray-50 hover:text-orange'
+          ? 'bg-black text-white'
+          : 'bg-white text-gray-700 hover:bg-gray-50 hover:text-black'
       }`}
     >
       {label}

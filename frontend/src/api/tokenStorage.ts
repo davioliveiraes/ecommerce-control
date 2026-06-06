@@ -1,4 +1,4 @@
-const TOKEN_KEY = 'ibeize_auth_token'
+const TOKEN_KEY = 'ecommerce_auth_token'
 
 export function getAuthToken() {
   return window.localStorage.getItem(TOKEN_KEY)

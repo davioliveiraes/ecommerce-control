@@ -9,10 +9,10 @@ export function StatusLancamentoBadgeRenderer(
   const status = !params.data.ativo ? 'ARQUIVADO' : params.data.status
   const className =
     status === 'PAGO'
-      ? 'bg-gray-50 text-navy'
+      ? 'bg-black text-white'
       : status === 'ARQUIVADO'
         ? 'bg-gray-100 text-gray-600'
-        : 'bg-orange-soft text-orange-dark'
+        : 'bg-gray-50 text-gray-900 border border-gray-300'
 
   const label =
     status === 'PAGO'

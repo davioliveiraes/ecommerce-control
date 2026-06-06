@@ -1,5 +1,14 @@
+import { useState } from 'react'
 import type { FinanceMetricaReceitaVendas } from '../../types/finance'
 import { formatCurrency } from '../../utils/format'
+
+interface BarHover {
+  nome: string
+  serie: 'Receita' | 'Vendas'
+  valor: string
+  color: string
+  key: string
+}
 
 interface Props {
   formaPagamento: FinanceMetricaReceitaVendas[]
@@ -23,37 +32,37 @@ export function PaymentStatisticsPanel({
   const totalVendas = sumVendas(formaPagamento)
   const summaryCards = [
     {
-      color: '#0ea5b7',
+      color: '#0a0a0a',
       title: 'Receita por forma de pagamento',
       value: formatCurrency(sumReceita(formaPagamento)),
       details: buildDetails(formas, 'receita'),
     },
     {
-      color: '#d6008f',
+      color: '#404040',
       title: 'Vendas por forma de pagamento',
       value: sumVendas(formaPagamento).toLocaleString('pt-BR'),
       details: buildDetails(formas, 'vendas'),
     },
     {
-      color: '#9b35a7',
+      color: '#525252',
       title: 'Receita por meio de pagamento',
       value: formatCurrency(sumReceita(meioPagamento)),
       details: buildDetails(meioPagamento, 'receita'),
     },
     {
-      color: '#1d1ee8',
+      color: '#737373',
       title: 'Vendas por meio de pagamento',
       value: sumVendas(meioPagamento).toLocaleString('pt-BR'),
       details: buildDetails(meioPagamento, 'vendas'),
     },
     {
-      color: '#f59e0b',
+      color: '#262626',
       title: 'Receita por quantidade de parcelas',
       value: formatCurrency(sumReceita(parcelas)),
       details: buildDetails(parcelas, 'receita'),
     },
     {
-      color: '#c2412d',
+      color: '#a3a3a3',
       title: 'Vendas por quantidade de parcelas',
       value: sumVendas(parcelas).toLocaleString('pt-BR'),
       details: buildDetails(parcelas, 'vendas'),
@@ -70,8 +79,8 @@ export function PaymentStatisticsPanel({
           </h2>
         </div>
         <div className="hidden sm:flex gap-3 text-xs text-gray-600">
-          <Legend color="#9bbfed" label="Receita" />
-          <Legend color="#c9ddf8" label="Vendas" />
+          <Legend color="#0a0a0a" label="Receita" />
+          <Legend color="#a3a3a3" label="Vendas" />
         </div>
       </div>
 
@@ -122,6 +131,7 @@ function PaymentOverviewChart({
 }: {
   data: FinanceMetricaReceitaVendas[]
 }) {
+  const [hover, setHover] = useState<BarHover | null>(null)
   const maxReceita = Math.max(1, ...data.map((item) => parseFloat(item.receita)))
   const maxVendas = Math.max(1, ...data.map((item) => item.vendas))
   const maxChartValue = Math.max(maxReceita, maxVendas)
@@ -130,7 +140,7 @@ function PaymentOverviewChart({
     <div
       role="img"
       aria-label="Receita e vendas por forma de pagamento"
-      className="h-full min-h-[430px] border border-gray-200 px-5 pt-6 pb-4"
+      className="relative h-full min-h-[430px] border border-gray-200 px-5 pt-6 pb-4"
     >
       <div
         className="grid h-[calc(100%-2.25rem)] min-h-[360px] items-end gap-8 border-b border-gray-300"
@@ -154,8 +164,34 @@ function PaymentOverviewChart({
               </div>
 
               <div className="flex min-h-0 flex-1 items-end justify-center gap-3">
-                <Bar label="Receita" color="#9bbfed" height={receitaHeight} />
-                <Bar label="Vendas" color="#c9ddf8" height={vendasHeight} />
+                <Bar
+                  color="#0a0a0a"
+                  height={receitaHeight}
+                  onEnter={() =>
+                    setHover({
+                      key: `${item.chave}-r`,
+                      nome: item.nome,
+                      serie: 'Receita',
+                      valor: formatCurrency(receita),
+                      color: '#0a0a0a',
+                    })
+                  }
+                  onLeave={() => setHover(null)}
+                />
+                <Bar
+                  color="#a3a3a3"
+                  height={vendasHeight}
+                  onEnter={() =>
+                    setHover({
+                      key: `${item.chave}-v`,
+                      nome: item.nome,
+                      serie: 'Vendas',
+                      valor: item.vendas.toLocaleString('pt-BR'),
+                      color: '#a3a3a3',
+                    })
+                  }
+                  onLeave={() => setHover(null)}
+                />
               </div>
 
               <div className="mt-3 truncate text-center font-mono text-sm text-gray-600">
@@ -165,6 +201,18 @@ function PaymentOverviewChart({
           )
         })}
       </div>
+
+      {hover && (
+        <div className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2 border border-black bg-white px-3 py-2 shadow-lg min-w-[180px]">
+          <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-gray-600">
+            <span className="h-2 w-2" style={{ backgroundColor: hover.color }} />
+            {hover.nome} · {hover.serie}
+          </div>
+          <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-black">
+            {hover.valor}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -181,19 +229,22 @@ function OverviewCard({ label, value }: { label: string; value: string }) {
 }
 
 function Bar({
-  label,
   color,
   height,
+  onEnter,
+  onLeave,
 }: {
-  label: string
   color: string
   height: number
+  onEnter: () => void
+  onLeave: () => void
 }) {
   return (
     <div className="flex h-full flex-col items-center justify-end gap-1">
       <div
-        title={label}
-        className="w-20 transition-[height] duration-300"
+        onMouseEnter={onEnter}
+        onMouseLeave={onLeave}
+        className="w-20 cursor-pointer transition-[height] duration-300"
         style={{
           height: `${Math.max(1, height)}%`,
           backgroundColor: color,

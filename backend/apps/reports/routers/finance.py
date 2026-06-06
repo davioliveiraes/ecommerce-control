@@ -32,5 +32,5 @@ def relatorio_finance_pdf(
         busca=busca,
     )
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    response["Content-Disposition"] = 'attachment; filename="ibeize-finance.pdf"'
+    response["Content-Disposition"] = 'attachment; filename="ecommerce-finance.pdf"'
     return response

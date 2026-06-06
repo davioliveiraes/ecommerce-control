@@ -13,11 +13,12 @@ from finance.routers import (
     categoria_router as finance_categoria_router,
     lancamento_router as finance_lancamento_router,
     dashboard_router as finance_dashboard_router,
+    analytics_router as finance_analytics_router,
 )
 from reports.routers import catalog_report_router, finance_report_router
 
 api = NinjaAPI(
-    title="Controle Interno Site Ibeize API",
+    title="Controle Interno — {{COMPANY_NAME}} API",
     version="1.0.0",
     description="API interna para gerenciamento de catálogo e finanças.",
 )
@@ -40,6 +41,7 @@ api.add_router("/catalog/variacoes", variacao_router, auth=auth)
 api.add_router("/finance/categorias", finance_categoria_router, auth=auth)
 api.add_router("/finance/lancamentos", finance_lancamento_router, auth=auth)
 api.add_router("/finance/dashboard", finance_dashboard_router, auth=auth)
+api.add_router("/finance/analytics", finance_analytics_router, auth=auth)
 
 api.add_router("/reports/catalog", catalog_report_router, auth=auth)
 api.add_router("/reports/finance", finance_report_router, auth=auth)

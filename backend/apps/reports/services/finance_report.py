@@ -133,7 +133,7 @@ def gerar_relatorio_finance(
         for lancamento in lancamentos
     ]
 
-    pdf = RelatorioPDF(subtitulo="Relatório — Ibeize Finance", orientacao="landscape")
+    pdf = RelatorioPDF(subtitulo="Relatório — {{COMPANY_NAME}} Finance", orientacao="landscape")
     pdf.adicionar_secao("Resumo executivo")
     pdf.adicionar_texto(
         "Este relatório consolida os lançamentos financeiros do período selecionado "

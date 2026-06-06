@@ -18,7 +18,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning'
 
 export function ProdutoEditorPage() {
-  useDocumentTitle('Editar produto — Ibeize Catálogo')
+  useDocumentTitle('Editar produto — {{COMPANY_NAME}} Catálogo')
 
   const { id } = useParams<{ id: string }>()
   const produtoId = Number(id)
@@ -134,7 +134,7 @@ export function ProdutoEditorPage() {
   if (produtoQuery.isError || variacoesQuery.isError) {
     return (
       <div className="max-w-5xl mx-auto px-6 py-12">
-        <div className="border border-orange/40 bg-orange-soft px-6 py-5">
+        <div className="border border-gray-300 bg-gray-50 px-6 py-5">
           <div className="kicker mb-2">Erro</div>
           <h3 className="font-display text-lg font-semibold text-black mb-1">
             Falha ao carregar produto
@@ -158,14 +158,14 @@ export function ProdutoEditorPage() {
             <button
               type="button"
               onClick={() => navigate('/catalogo')}
-              className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-orange transition-colors mb-3 font-mono"
+              className="inline-flex items-center gap-1.5 text-xs text-gray-600 hover:text-black transition-colors mb-3 font-mono"
             >
               <IconArrowLeft />
               voltar ao catálogo
             </button>
             <div className="kicker mb-2">Módulo 01 · Edição</div>
             <h1 className="font-display text-3xl font-semibold text-black tracking-tight mb-1">
-              Editar produto — Ibeize Catálogo
+              Editar produto — {`{{COMPANY_NAME}}`} Catálogo
             </h1>
             <p className="text-sm text-gray-600 truncate">
               {produtoQuery.data?.descricao_produto_site}
@@ -183,7 +183,7 @@ export function ProdutoEditorPage() {
             <button
               type="submit"
               disabled={saveMutation.isPending || !formState.isDirty}
-              className="px-4 py-2 text-sm border border-orange bg-orange text-white hover:bg-orange-dark hover:border-orange-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm border border-black bg-black text-white hover:bg-gray-900 hover:border-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saveMutation.isPending ? 'salvando...' : 'Salvar alterações'}
             </button>
@@ -191,7 +191,7 @@ export function ProdutoEditorPage() {
         </div>
 
         {saveMutation.isError && (
-          <div className="border border-orange/40 bg-orange-soft px-4 py-3 mb-6">
+          <div className="border border-gray-300 bg-gray-50 px-4 py-3 mb-6">
             <div className="kicker mb-1">Erro</div>
             <p className="text-sm text-black">
               Falha ao salvar:{' '}
@@ -231,7 +231,7 @@ export function ProdutoEditorPage() {
                   ativo: true,
                 })
               }
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-orange text-orange hover:bg-orange-soft transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-black text-black hover:bg-gray-50 transition-colors"
             >
               <IconPlus />
               Adicionar variação
@@ -250,7 +250,7 @@ export function ProdutoEditorPage() {
           </div>
 
           {formState.errors.variacoes?.message && (
-            <p className="mt-3 text-sm text-orange-dark">
+            <p className="mt-3 text-sm text-gray-900">
               {formState.errors.variacoes.message}
             </p>
           )}

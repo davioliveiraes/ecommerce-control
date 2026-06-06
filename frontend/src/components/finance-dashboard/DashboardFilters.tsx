@@ -27,7 +27,7 @@ export function DashboardFilters({
           type="date"
           value={dataInicio}
           onChange={(event) => onDataInicioChange(event.target.value)}
-          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-orange transition-colors font-mono"
+          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-black transition-colors font-mono"
         />
       </div>
 
@@ -39,7 +39,7 @@ export function DashboardFilters({
           type="date"
           value={dataFim}
           onChange={(event) => onDataFimChange(event.target.value)}
-          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-orange transition-colors font-mono"
+          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-black transition-colors font-mono"
         />
       </div>
 
@@ -48,7 +48,7 @@ export function DashboardFilters({
           type="checkbox"
           checked={incluirPendentes}
           onChange={(event) => onIncluirPendentesChange(event.target.checked)}
-          className="accent-orange"
+          className="accent-black"
         />
         Incluir pendentes
       </label>

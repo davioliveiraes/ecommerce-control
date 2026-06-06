@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 36" fill="none">
+  <text x="0" y="26"
+        font-family="Geist, system-ui, -apple-system, 'Segoe UI', sans-serif"
+        font-weight="600"
+        font-size="22"
+        fill="#0A0A0A"
+        letter-spacing="-0.4">{{COMPANY_NAME}}</text>
+</svg>

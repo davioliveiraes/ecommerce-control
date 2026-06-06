@@ -2,9 +2,9 @@ import type { ICellRendererParams } from 'ag-grid-community'
 import type { LancamentoFinanceiro } from '../../types/finance'
 
 const TIPO_LABELS = {
-  RECEITA: { label: 'Entrada', detail: 'Receita', tone: 'text-navy bg-gray-50' },
-  DESPESA: { label: 'Saída', detail: 'Despesa', tone: 'text-orange-dark bg-orange-soft' },
-  CUSTO: { label: 'Saída', detail: 'Custo', tone: 'text-orange-dark bg-orange-soft' },
+  RECEITA: { label: 'Entrada', detail: 'Receita', tone: 'text-black bg-gray-50 border border-gray-200' },
+  DESPESA: { label: 'Saída', detail: 'Despesa', tone: 'text-white bg-black' },
+  CUSTO: { label: 'Saída', detail: 'Custo', tone: 'text-white bg-gray-700' },
 } as const
 
 export function TipoLancamentoBadgeRenderer(

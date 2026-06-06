@@ -9,7 +9,7 @@ export function PercentCellRenderer(params: ICellRendererParams) {
     typeof params.value === 'string' ? parseFloat(params.value) : params.value
 
   const colorClass =
-    num >= 100 ? 'text-navy' : num >= 50 ? 'text-gray-600' : 'text-orange'
+    num >= 100 ? 'text-black' : num >= 50 ? 'text-gray-600' : 'text-gray-400'
 
   return (
     <span className={`font-mono tabular-nums font-medium ${colorClass}`}>

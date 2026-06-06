@@ -22,6 +22,13 @@ def format_percent(valor) -> str:
     return f"{valor:.1f}%".replace(".", ",")
 
 
+STATUS_LABEL = {"ATIVO": "Ativo", "INATIVO": "Inativo"}
+
+
+def format_status(valor) -> str:
+    return STATUS_LABEL.get(valor or "", valor or "-")
+
+
 COLUNAS_DISPONIVEIS = {
     "sku": ("SKU", lambda v: v.sku_nuvemshop or "-"),
     "produto_descricao_site": (
@@ -41,9 +48,20 @@ COLUNAS_DISPONIVEIS = {
     "custo": ("Custo", lambda v: format_brl(v.custo)),
     "preco_loja": ("Preço Loja", lambda v: format_brl(v.preco_loja)),
     "preco_site": ("Preço Site", lambda v: format_brl(v.preco_site)),
+    "preco_promocional": ("Preço Promo", lambda v: format_brl(v.preco_promocional)),
     "margem_percentual": ("Margem %", lambda v: format_percent(v.margem_percentual)),
-    "status_nuvemshop": ("Status NS", lambda v: v.status_nuvemshop),
-    "status_integracao": ("Status Int.", lambda v: v.status_integracao),
+    "margem_promocional_percentual": (
+        "Margem Promo %",
+        lambda v: format_percent(v.margem_promocional_percentual),
+    ),
+    "status_nuvemshop": (
+        "Status NuvemShop",
+        lambda v: format_status(v.status_nuvemshop),
+    ),
+    "status_integracao": (
+        "Status Integração",
+        lambda v: format_status(v.status_integracao),
+    ),
 }
 
 COLUNAS_PADRAO = ["sku", "produto_descricao_site", "variacao", "preco_site"]
@@ -55,6 +73,7 @@ def gerar_relatorio_catalogo(
     marca_id: Optional[int] = None,
     subcategoria_id: Optional[int] = None,
     busca: str = "",
+    apenas_promocional: bool = False,
 ) -> bytes:
     colunas_validas = [coluna for coluna in colunas if coluna in COLUNAS_DISPONIVEIS]
     if not colunas_validas:
@@ -67,6 +86,8 @@ def gerar_relatorio_catalogo(
         qs = qs.filter(produto__marca_id=marca_id)
     if subcategoria_id is not None:
         qs = qs.filter(produto__subcategoria_id=subcategoria_id)
+    if apenas_promocional:
+        qs = qs.filter(preco_promocional__isnull=False)
     if busca:
         qs = qs.filter(
             Q(sku_nuvemshop__icontains=busca)
@@ -78,6 +99,8 @@ def gerar_relatorio_catalogo(
     qs = qs.order_by("produto__descricao_produto_site", "produto__nome_site", "descricao")
 
     filtros = {"Status": "Ativos + inativos" if incluir_inativos else "Apenas ativos"}
+    if apenas_promocional:
+        filtros["Promoção"] = "Apenas variações com preço promocional"
     if marca_id is not None:
         marca = Marca.objects.filter(id=marca_id).first()
         if marca:
@@ -109,8 +132,15 @@ def gerar_relatorio_catalogo(
     ]
     preco_medio = sum(com_preco_site) / len(com_preco_site) if com_preco_site else None
     margem_media = sum(margens) / len(margens) if margens else None
-    status_nuvemshop = Counter(variacao.status_nuvemshop for variacao in variacoes)
-    status_integracao = Counter(variacao.status_integracao for variacao in variacoes)
+    status_nuvemshop = Counter(
+        format_status(variacao.status_nuvemshop) for variacao in variacoes
+    )
+    status_integracao = Counter(
+        format_status(variacao.status_integracao) for variacao in variacoes
+    )
+    em_promocao = sum(1 for v in variacoes if v.preco_promocional is not None)
+    precos_promo = [v.preco_promocional for v in variacoes if v.preco_promocional is not None]
+    promo_medio = sum(precos_promo) / len(precos_promo) if precos_promo else None
     marcas = Counter(
         variacao.produto.marca.nome if variacao.produto.marca else "Sem marca"
         for variacao in variacoes
@@ -125,22 +155,23 @@ def gerar_relatorio_catalogo(
     pdf = RelatorioPDF(subtitulo="Relatório de Catálogo", orientacao="landscape")
     pdf.adicionar_secao("Visão geral")
     pdf.adicionar_texto(
-        "Este relatório apresenta a posição do catálogo Ibeize no recorte "
+        "Este relatório apresenta a posição do catálogo no recorte "
         "selecionado, com leitura de disponibilidade, cobertura de preços e "
         "agrupamentos comerciais antes da listagem operacional."
     )
-    pdf.adicionar_kpis(
-        [
-            ("Variações", f"{total}"),
-            ("Produtos", f"{len(produtos)}"),
-            ("Ativas", f"{ativos}"),
-            ("Preço site médio", format_brl(preco_medio)),
-            ("Margem média", format_percent(margem_media)),
-            ("Com preço site", f"{len(com_preco_site)}"),
-            ("Marcas", f"{len(marcas)}"),
-            ("Subcategorias", f"{len(subcategorias)}"),
-        ]
-    )
+    kpis = [
+        ("Variações", f"{total}"),
+        ("Produtos", f"{len(produtos)}"),
+        ("Ativas", f"{ativos}"),
+        ("Preço site médio", format_brl(preco_medio)),
+        ("Margem média", format_percent(margem_media)),
+        ("Em promoção", f"{em_promocao}"),
+        ("Marcas", f"{len(marcas)}"),
+        ("Subcategorias", f"{len(subcategorias)}"),
+    ]
+    if apenas_promocional:
+        kpis[5] = ("Preço promo médio", format_brl(promo_medio))
+    pdf.adicionar_kpis(kpis)
     pdf.adicionar_filtros(filtros)
     pdf.adicionar_grafico_barras(
         "Status NuvemShop",

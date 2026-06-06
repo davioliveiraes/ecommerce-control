@@ -75,7 +75,7 @@ export function VariacaoCard({ index, onRemove, canRemove }: Props) {
           <button
             type="button"
             onClick={onRemove}
-            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-orange-dark hover:bg-orange-soft transition-colors shrink-0"
+            className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-black hover:bg-gray-100 transition-colors shrink-0"
             title="Remover variação"
           >
             <IconTrash />
@@ -156,7 +156,7 @@ export function VariacaoCard({ index, onRemove, canRemove }: Props) {
               type="button"
               onClick={copiarPrecoSiteParaPromocao}
               disabled={!precoSite}
-              className="inline-flex items-center justify-center px-2 border border-gray-200 bg-white text-gray-600 hover:text-orange hover:border-orange transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center justify-center px-2 border border-gray-200 bg-white text-gray-600 hover:text-black hover:border-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               title="Copiar preço site"
               aria-label="Copiar preço site para preço promocional"
             >
@@ -214,7 +214,7 @@ export function VariacaoCard({ index, onRemove, canRemove }: Props) {
           <input
             type="checkbox"
             {...register(`variacoes.${index}.ativo`)}
-            className="accent-orange"
+            className="accent-black"
           />
           Variação ativa
         </label>
@@ -236,7 +236,7 @@ function Field({
     <div>
       <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
         {label}
-        {required && <span className="text-orange ml-1">*</span>}
+        {required && <span className="text-black ml-1">*</span>}
       </label>
       {children}
     </div>
@@ -244,7 +244,7 @@ function Field({
 }
 
 function FieldError({ children }: { children: React.ReactNode }) {
-  return <p className="mt-1 text-xs text-orange-dark">{children}</p>
+  return <p className="mt-1 text-xs text-gray-900">{children}</p>
 }
 
 function IconTrash() {

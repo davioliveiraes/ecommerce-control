@@ -37,7 +37,7 @@ export function LancamentoFinanceiroSection({ categorias }: Props) {
           </div>
           <div
             className={`font-mono text-lg tabular-nums ${
-              tipo === 'RECEITA' ? 'text-navy' : 'text-orange-dark'
+              tipo === 'RECEITA' ? 'text-black' : 'text-gray-700'
             }`}
           >
             {previewValue}
@@ -204,11 +204,11 @@ function FieldLabel({
   return (
     <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
       {children}
-      {required && <span className="text-orange ml-1">*</span>}
+      {required && <span className="text-black ml-1">*</span>}
     </label>
   )
 }
 
 function FieldError({ children }: { children: React.ReactNode }) {
-  return <p className="mt-1 text-xs text-orange-dark">{children}</p>
+  return <p className="mt-1 text-xs text-gray-900">{children}</p>
 }

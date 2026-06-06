@@ -17,8 +17,8 @@ class DashboardAPITestCase(TestCase):
             nome="Marketing", slug="mkt"
         )
         self.cat_vendas, _ = CategoriaFinanceira.objects.get_or_create(
-            slug="nuvemshop-nuvempago",
-            defaults={"nome": "NuvemShop(NuvemPago)"},
+            slug="vendas-nuvemshop",
+            defaults={"nome": "Vendas NuvemShop"},
         )
 
         # Maio: 100 receita, 30 custo, 20 despesa = lucro 50

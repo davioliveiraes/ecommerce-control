@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 
 import { fetchCategoriasFinanceiras } from '../api/categoriasFinanceiras'
 import { fetchFinanceDashboard } from '../api/financeDashboard'
+import { AnalyticsOverview } from '../components/finance-dashboard/AnalyticsOverview'
+import { AnalyticsProducts } from '../components/finance-dashboard/AnalyticsProducts'
 import { ExportPdfModal } from '../components/reports/ExportPdfModal'
 import {
   CategoryFiltersPanel,
@@ -19,9 +21,103 @@ import { useDownloadPdf } from '../hooks/useDownloadPdf'
 import type { FinancePeriodoCategoria, TipoLancamento } from '../types/finance'
 import { COLUNAS_FINANCE } from '../types/reports'
 
-export function FinancePage() {
-  useDocumentTitle('Finance — Site Ibeize')
+type TabKey = 'financeiro' | 'visao_geral' | 'produtos'
 
+const TABS: Array<{ key: TabKey; label: string; description: string }> = [
+  {
+    key: 'financeiro',
+    label: 'Financeiro',
+    description: 'Receita, custo, despesa e lucro consolidados.',
+  },
+  {
+    key: 'visao_geral',
+    label: 'Visão geral',
+    description: 'Visitas, comportamento e conversões da loja.',
+  },
+  {
+    key: 'produtos',
+    label: 'Produtos',
+    description: 'Rankings de vendas, visualizações, estoque e margem.',
+  },
+]
+
+export function FinancePage() {
+  useDocumentTitle('Finance — {{COMPANY_NAME}}')
+
+  const [activeTab, setActiveTab] = useState<TabKey>('financeiro')
+
+  return (
+    <div className="max-w-[1600px] mx-auto px-8 py-6">
+      <FinancePageHeader />
+
+      <nav className="mt-6 mb-5 border-b border-gray-200">
+        <div className="flex items-end gap-1 overflow-x-auto">
+          {TABS.map((tab) => {
+            const isActive = tab.key === activeTab
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
+                  isActive
+                    ? 'text-black'
+                    : 'text-gray-500 hover:text-black'
+                }`}
+              >
+                {tab.label}
+                {isActive && (
+                  <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-black" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </nav>
+
+      {activeTab === 'financeiro' && <FinanceiroTab />}
+      {activeTab === 'visao_geral' && <AnalyticsOverview />}
+      {activeTab === 'produtos' && <AnalyticsProducts />}
+    </div>
+  )
+}
+
+function FinancePageHeader() {
+  return (
+    <div className="flex items-start justify-between gap-6">
+      <div className="min-w-0">
+        <div className="kicker mb-1.5">Módulo 02</div>
+        <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
+          Dashboard — {`{{COMPANY_NAME}}`} Finance
+        </h1>
+        <p className="text-sm text-gray-600 mt-1 max-w-3xl">
+          Resultado consolidado dos lançamentos financeiros, com visão mensal,
+          estatísticas da loja e rankings de produtos.
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-gray-200 bg-white text-gray-700 hover:border-black hover:text-black transition-colors"
+        >
+          <IconHome />
+          Inicio
+        </Link>
+
+        <Link
+          to="/finance/lancamentos"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-black bg-black text-white hover:bg-gray-900 hover:border-gray-900 transition-colors"
+        >
+          <IconList />
+          Lançamentos
+        </Link>
+      </div>
+    </div>
+  )
+}
+
+function FinanceiroTab() {
   const [dataInicio, setDataInicio] = useState(getStartOfCurrentYear())
   const [dataFim, setDataFim] = useState(getTodayInputValue())
   const [incluirPendentes, setIncluirPendentes] = useState(false)
@@ -89,54 +185,14 @@ export function FinancePage() {
         categoria_id: categoriaId ?? undefined,
         status: incluirPendentes ? undefined : 'PAGO',
       },
-      `ibeize-finance-dashboard-${new Date().toISOString().slice(0, 10)}.pdf`,
+      `ecommerce-finance-dashboard-${new Date().toISOString().slice(0, 10)}.pdf`,
     )
     setIsExportOpen(false)
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-8 py-6">
-      <div className="flex items-start justify-between gap-6 mb-5">
-        <div className="min-w-0">
-          <div className="kicker mb-1.5">Módulo 02</div>
-          <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
-            Dashboard — Ibeize Finance
-          </h1>
-          <p className="text-sm text-gray-600 mt-1 max-w-3xl">
-            Resultado consolidado dos lançamentos financeiros, com visão mensal
-            e estatísticas de categorias e pagamentos.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-gray-200 bg-white text-gray-700 hover:border-orange hover:text-orange transition-colors"
-          >
-            <IconHome />
-            Inicio
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => setIsExportOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-orange text-orange hover:bg-orange-soft transition-colors"
-          >
-            <IconDownload />
-            Exportar PDF
-          </button>
-
-          <Link
-            to="/finance/lancamentos"
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-orange bg-orange text-white hover:bg-orange-dark hover:border-orange-dark transition-colors"
-          >
-            <IconList />
-            Lançamentos
-          </Link>
-        </div>
-      </div>
-
-      <div className="space-y-5">
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-3">
         <DashboardFilters
           dataInicio={dataInicio}
           dataFim={dataFim}
@@ -147,76 +203,85 @@ export function FinancePage() {
           onClear={clearFilters}
         />
 
-        {dashboardQuery.isError && (
-          <div className="border border-orange/40 bg-orange-soft px-6 py-5">
-            <div className="kicker mb-2">Erro</div>
-            <h3 className="font-display text-lg font-semibold text-black mb-1">
-              Falha ao carregar dashboard
-            </h3>
-            <p className="text-sm text-gray-600">
-              {(dashboardQuery.error as Error)?.message || 'Erro desconhecido'}
-            </p>
-          </div>
-        )}
+        <button
+          type="button"
+          onClick={() => setIsExportOpen(true)}
+          className="inline-flex shrink-0 items-center gap-1.5 px-4 py-2 text-sm border border-black text-black hover:bg-gray-50 transition-colors"
+        >
+          <IconDownload />
+          Exportar PDF
+        </button>
+      </div>
 
-        {dashboardQuery.isLoading && (
-          <div className="border border-gray-200 bg-white px-6 py-16 text-center font-mono text-sm text-gray-600">
-            carregando dashboard...
-          </div>
-        )}
+      {dashboardQuery.isError && (
+        <div className="border border-gray-300 bg-gray-50 px-6 py-5">
+          <div className="kicker mb-2">Erro</div>
+          <h3 className="font-display text-lg font-semibold text-black mb-1">
+            Falha ao carregar dashboard
+          </h3>
+          <p className="text-sm text-gray-600">
+            {(dashboardQuery.error as Error)?.message || 'Erro desconhecido'}
+          </p>
+        </div>
+      )}
 
-        {dashboardQuery.data && (
-          <>
-            <KpiCards kpis={dashboardQuery.data.kpis} />
+      {dashboardQuery.isLoading && (
+        <div className="border border-gray-200 bg-white px-6 py-16 text-center font-mono text-sm text-gray-600">
+          carregando dashboard...
+        </div>
+      )}
 
-            <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-stretch">
-              <div className="space-y-5 min-w-0">
-                <TimelineChart
-                  data={dashboardQuery.data.serie_mensal}
-                  visibleTypes={visibleTimelineTypes}
-                />
+      {dashboardQuery.data && (
+        <>
+          <KpiCards kpis={dashboardQuery.data.kpis} />
 
-                <CategoryPieChart
-                  receitas={dashboardQuery.data.receitas_por_categoria}
-                  despesas={dashboardQuery.data.despesas_por_categoria}
-                  custos={dashboardQuery.data.custos_por_categoria}
-                />
-              </div>
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-stretch">
+            <div className="space-y-5 min-w-0">
+              <TimelineChart
+                data={dashboardQuery.data.serie_mensal}
+                visibleTypes={visibleTimelineTypes}
+              />
 
-              <CategoryFiltersPanel
+              <CategoryPieChart
                 receitas={dashboardQuery.data.receitas_por_categoria}
                 despesas={dashboardQuery.data.despesas_por_categoria}
                 custos={dashboardQuery.data.custos_por_categoria}
-                categorias={categoriasQuery.data || []}
-                periodosPorCategoria={
-                  dashboardQuery.data.periodos_por_categoria || []
-                }
-                selectedCategoriaId={categoriaId}
-                onCategoriaChange={handleCategoriaChange}
-                selectedTipo={tipoCategoria}
-                onTipoChange={setTipoCategoria}
               />
             </div>
 
-            <StoreOverviewPanel />
-
-            <PaymentStatisticsPanel
-              formaPagamento={
-                dashboardQuery.data.receita_vendas_por_forma_pagamento
+            <CategoryFiltersPanel
+              receitas={dashboardQuery.data.receitas_por_categoria}
+              despesas={dashboardQuery.data.despesas_por_categoria}
+              custos={dashboardQuery.data.custos_por_categoria}
+              categorias={categoriasQuery.data || []}
+              periodosPorCategoria={
+                dashboardQuery.data.periodos_por_categoria || []
               }
-              meioPagamento={
-                dashboardQuery.data.receita_vendas_por_meio_pagamento
-              }
-              parcelas={dashboardQuery.data.receita_vendas_por_parcelas}
+              selectedCategoriaId={categoriaId}
+              onCategoriaChange={handleCategoriaChange}
+              selectedTipo={tipoCategoria}
+              onTipoChange={setTipoCategoria}
             />
-          </>
-        )}
-      </div>
+          </div>
+
+          <StoreOverviewPanel />
+
+          <PaymentStatisticsPanel
+            formaPagamento={
+              dashboardQuery.data.receita_vendas_por_forma_pagamento
+            }
+            meioPagamento={
+              dashboardQuery.data.receita_vendas_por_meio_pagamento
+            }
+            parcelas={dashboardQuery.data.receita_vendas_por_parcelas}
+          />
+        </>
+      )}
 
       <ExportPdfModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
-        titulo="Relatório — Ibeize Finance"
+        titulo="Relatório — {{COMPANY_NAME}} Finance"
         colunasDisponiveis={COLUNAS_FINANCE}
         onConfirm={handleExport}
         isDownloading={isDownloading}

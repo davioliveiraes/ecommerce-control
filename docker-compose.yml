@@ -1,18 +1,18 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: ibeize_db
+    container_name: ecommerce_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-ibeize}
-      POSTGRES_USER: ${POSTGRES_USER:-ibeize}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ibeize}
+      POSTGRES_DB: ${POSTGRES_DB:-ecommerce}
+      POSTGRES_USER: ${POSTGRES_USER:-ecommerce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ecommerce}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ibeize}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ecommerce}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -21,7 +21,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ibeize_backend
+    container_name: ecommerce_backend
     restart: unless-stopped
     depends_on:
       db:
@@ -29,7 +29,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      DATABASE_URL: postgres://${POSTGRES_USER:-ibeize}:${POSTGRES_PASSWORD:-ibeize}@db:5432/${POSTGRES_DB:-ibeize}
+      DATABASE_URL: postgres://${POSTGRES_USER:-ecommerce}:${POSTGRES_PASSWORD:-ecommerce}@db:5432/${POSTGRES_DB:-ecommerce}
     volumes:
       - ./backend:/app
       - /app/__pycache__
@@ -43,7 +43,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: ibeize_frontend
+    container_name: ecommerce_frontend
     restart: unless-stopped
     depends_on:
       - backend

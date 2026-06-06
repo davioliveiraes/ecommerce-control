@@ -16,6 +16,7 @@ def relatorio_catalogo_pdf(
     marca_id: Optional[int] = None,
     subcategoria_id: Optional[int] = None,
     busca: str = "",
+    apenas_promocional: bool = False,
 ):
     pdf_bytes = gerar_relatorio_catalogo(
         colunas=colunas,
@@ -23,7 +24,8 @@ def relatorio_catalogo_pdf(
         marca_id=marca_id,
         subcategoria_id=subcategoria_id,
         busca=busca,
+        apenas_promocional=apenas_promocional,
     )
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
-    response["Content-Disposition"] = 'attachment; filename="ibeize-catalogo.pdf"'
+    response["Content-Disposition"] = 'attachment; filename="ecommerce-catalogo.pdf"'
     return response

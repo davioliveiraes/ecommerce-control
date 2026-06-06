@@ -65,7 +65,7 @@ export function AcoesLancamentoCellRenderer(
     <div className="flex items-center gap-1 h-full">
       <button
         onClick={handleEditar}
-        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-black hover:text-orange hover:bg-orange-soft transition-colors cursor-pointer"
+        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-black hover:text-black hover:bg-gray-100 transition-colors cursor-pointer"
         title="Editar lançamento"
       >
         <IconPencil />
@@ -76,7 +76,7 @@ export function AcoesLancamentoCellRenderer(
         <button
           onClick={handleMarcarPago}
           disabled={isBusy}
-          className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-navy hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-black hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
           title="Marcar como pago"
         >
           <IconCheck />
@@ -88,7 +88,7 @@ export function AcoesLancamentoCellRenderer(
         <button
           onClick={handleArquivar}
           disabled={isBusy}
-          className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-orange hover:bg-orange-soft transition-colors disabled:opacity-50 cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-black hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
           title="Arquivar lançamento"
         >
           <IconArchive />
@@ -98,7 +98,7 @@ export function AcoesLancamentoCellRenderer(
         <button
           onClick={handleRestaurar}
           disabled={isBusy}
-          className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-navy hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-gray-600 hover:text-black hover:bg-gray-100 transition-colors disabled:opacity-50 cursor-pointer"
           title="Restaurar lançamento"
         >
           <IconUndo />

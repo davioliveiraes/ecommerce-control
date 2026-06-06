@@ -46,7 +46,7 @@ export function StoreOverviewPanel() {
           <select
             value={period}
             onChange={(event) => setPeriod(event.target.value as PeriodKey)}
-            className="border border-gray-200 bg-white px-3 py-2 text-sm text-black focus:outline-none focus:border-orange"
+            className="border border-gray-200 bg-white px-3 py-2 text-sm text-black focus:outline-none focus:border-black"
           >
             {PERIODS.map((item) => (
               <option key={item.key} value={item.key}>
@@ -64,7 +64,7 @@ export function StoreOverviewPanel() {
       )}
 
       {overviewQuery.isError && (
-        <div className="border border-orange/40 bg-orange-soft px-6 py-5">
+        <div className="border border-gray-300 bg-gray-50 px-6 py-5">
           <div className="kicker mb-2">Erro</div>
           <h3 className="font-display text-lg font-semibold text-black mb-1">
             Falha ao carregar visão geral
@@ -94,19 +94,19 @@ function OverviewContent({ dashboard }: { dashboard: FinanceDashboard }) {
       <RevenueOverviewChart data={dashboard.serie_mensal} />
 
       <div className="space-y-3">
-        <OverviewMetricCard color="#0ea5b7" title="Vendas" value={String(vendas)} />
+        <OverviewMetricCard color="#0a0a0a" title="Vendas" value={String(vendas)} />
         <OverviewMetricCard
-          color="#d6008f"
+          color="#404040"
           title="Receita"
           value={formatCurrency(receita)}
         />
         <OverviewMetricCard
-          color="#9b35a7"
+          color="#737373"
           title="Ticket médio"
           value={formatCurrency(ticketMedio)}
         />
         <OverviewMetricCard
-          color="#1d1ee8"
+          color="#a3a3a3"
           title="Conversão do carrinho"
           value={formatPercent(conversaoCarrinho)}
         />
@@ -116,6 +116,9 @@ function OverviewContent({ dashboard }: { dashboard: FinanceDashboard }) {
 }
 
 function RevenueOverviewChart({ data }: { data: FinancePontoMensal[] }) {
+  const [hover, setHover] = useState<{ label: string; receita: number } | null>(
+    null,
+  )
   const parsed = data.map((point) => ({
     label: formatMonth(point.mes),
     receita: parseFloat(point.receita),
@@ -131,7 +134,7 @@ function RevenueOverviewChart({ data }: { data: FinancePontoMensal[] }) {
   }
 
   return (
-    <div className="border border-gray-200 px-5 pt-6 pb-4">
+    <div className="relative border border-gray-200 px-5 pt-6 pb-4">
       <div className="grid min-h-[300px] items-end gap-4 border-b border-gray-300">
         {parsed.map((point) => (
           <div key={point.label} className="flex h-full min-w-0 flex-col">
@@ -140,7 +143,9 @@ function RevenueOverviewChart({ data }: { data: FinancePontoMensal[] }) {
             </div>
             <div className="flex min-h-0 flex-1 items-end justify-center">
               <div
-                className="w-12 bg-[#0ea5b7] transition-[height] duration-300"
+                onMouseEnter={() => setHover(point)}
+                onMouseLeave={() => setHover(null)}
+                className="w-12 cursor-pointer bg-[#0a0a0a] transition-[height] duration-300"
                 style={{
                   height: `${Math.max(1, (point.receita / maxReceita) * 100)}%`,
                 }}
@@ -153,9 +158,21 @@ function RevenueOverviewChart({ data }: { data: FinancePontoMensal[] }) {
         ))}
       </div>
       <div className="mt-3 flex items-center justify-center gap-2 text-sm text-black">
-        <span className="h-3 w-3 bg-[#0ea5b7]" />
+        <span className="h-3 w-3 bg-[#0a0a0a]" />
         Receita
       </div>
+
+      {hover && (
+        <div className="pointer-events-none absolute left-1/2 top-3 z-10 -translate-x-1/2 border border-black bg-white px-3 py-2 shadow-lg min-w-[180px]">
+          <div className="flex items-center gap-2 text-[11px] font-medium uppercase tracking-wider text-gray-600">
+            <span className="h-2 w-2 bg-black" />
+            Receita · {hover.label}
+          </div>
+          <div className="mt-1 font-mono text-sm font-semibold tabular-nums text-black">
+            {formatCurrency(hover.receita)}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

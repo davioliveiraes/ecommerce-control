@@ -5,7 +5,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export function LoginPage() {
-  useDocumentTitle('Login — Controle Interno Site Ibeize')
+  useDocumentTitle('Login — Controle Interno {{COMPANY_NAME}}')
 
   const { isAuthenticated, isLoading, login } = useAuth()
   const navigate = useNavigate()
@@ -41,15 +41,15 @@ export function LoginPage() {
   return (
     <main className="min-h-screen bg-white flex">
       <section className="hidden lg:flex w-[42%] border-r border-gray-200 bg-gray-50 px-12 py-10 flex-col justify-between">
-        <img src="/brand/logo_ibeize.png" alt="Ibeize" className="h-10 w-fit" />
+        <img src="/brand/logo.svg" alt="{{COMPANY_NAME}}" className="h-10 w-fit" />
         <div>
           <div className="kicker mb-4">v1.0.0</div>
           <h1 className="font-display text-4xl font-semibold text-black tracking-tight leading-tight max-w-md">
             Controle interno de catálogo e financeiro.
           </h1>
           <p className="text-sm text-gray-600 leading-relaxed mt-4 max-w-sm">
-            Acesso restrito para operação da Ibeize. Entre com seu usuário do
-            Django para continuar.
+            Acesso restrito à operação. Entre com seu usuário do Django para
+            continuar.
           </p>
         </div>
         <div className="font-mono text-xs text-gray-600">
@@ -102,7 +102,7 @@ export function LoginPage() {
           </div>
 
           {error && (
-            <div className="mt-4 border border-orange/40 bg-orange-soft px-3 py-2 text-sm text-orange-dark">
+            <div className="mt-4 border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
               {error}
             </div>
           )}
@@ -110,7 +110,7 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting || !username || !password}
-            className="mt-6 w-full px-4 py-2 text-sm border border-orange bg-orange text-white hover:bg-orange-dark hover:border-orange-dark transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="mt-6 w-full px-4 py-2 text-sm border border-black bg-black text-white hover:bg-gray-900 hover:border-gray-900 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'entrando...' : 'Entrar'}
           </button>

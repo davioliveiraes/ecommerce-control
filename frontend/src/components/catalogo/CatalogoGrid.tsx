@@ -27,6 +27,7 @@ export function CatalogoGrid() {
   const [searchText, setSearchText] = useState('')
   const [incluirInativos, setIncluirInativos] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
+  const [apenasPromocional, setApenasPromocional] = useState(false)
   const { download, isDownloading } = useDownloadPdf()
 
   const {
@@ -224,16 +225,29 @@ export function CatalogoGrid() {
       {
         colunas,
         incluir_inativos: incluirInativos,
+        apenas_promocional: apenasPromocional,
         busca: searchText || undefined,
       },
-      `ibeize-catalogo-${new Date().toISOString().slice(0, 10)}.pdf`,
+      `ecommerce-catalogo-${new Date().toISOString().slice(0, 10)}.pdf`,
     )
     setIsExportOpen(false)
   }
 
+  const filtrosExtrasModal = (
+    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+      <input
+        type="checkbox"
+        checked={apenasPromocional}
+        onChange={(e) => setApenasPromocional(e.target.checked)}
+        className="accent-black"
+      />
+      Apenas variações com preço promocional
+    </label>
+  )
+
   if (isError) {
     return (
-      <div className="border border-orange/40 bg-orange-soft px-6 py-5">
+      <div className="border border-gray-300 bg-gray-50 px-6 py-5">
         <div className="kicker mb-2">Erro</div>
         <h3 className="font-display text-lg font-semibold text-black mb-1">
           Falha ao carregar variações
@@ -254,7 +268,7 @@ export function CatalogoGrid() {
             placeholder="Buscar em todas as colunas..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-orange transition-colors"
+            className="w-full px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-black transition-colors"
           />
         </div>
 
@@ -263,7 +277,7 @@ export function CatalogoGrid() {
             type="checkbox"
             checked={incluirInativos}
             onChange={(e) => setIncluirInativos(e.target.checked)}
-            className="accent-orange"
+            className="accent-black"
           />
           Incluir inativos
         </label>
@@ -271,7 +285,7 @@ export function CatalogoGrid() {
         <button
           type="button"
           onClick={() => setIsExportOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-orange text-orange hover:bg-orange-soft transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border border-black text-black hover:bg-gray-50 transition-colors"
         >
           <IconDownload />
           Exportar PDF
@@ -285,7 +299,7 @@ export function CatalogoGrid() {
       </div>
 
       <div
-        className="ag-theme-quartz ibeize-grid ibeize-catalog-grid"
+        className="ag-theme-quartz ecommerce-grid ecommerce-catalog-grid"
         style={{ height: 'calc(100vh - 240px)', minHeight: 500 }}
       >
         <AgGridReact<Variacao>
@@ -301,8 +315,9 @@ export function CatalogoGrid() {
       <ExportPdfModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
-        titulo="Exportar — Ibeize Catálogo"
+        titulo="Exportar — {{COMPANY_NAME}} Catálogo"
         colunasDisponiveis={COLUNAS_CATALOGO}
+        filtrosExtras={filtrosExtrasModal}
         onConfirm={handleExport}
         isDownloading={isDownloading}
       />

@@ -215,7 +215,7 @@ export function LancamentosFinanceirosGrid() {
 
   if (isError) {
     return (
-      <div className="border border-orange/40 bg-orange-soft px-6 py-5">
+      <div className="border border-gray-300 bg-gray-50 px-6 py-5">
         <div className="kicker mb-2">Erro</div>
         <h3 className="font-display text-lg font-semibold text-black mb-1">
           Falha ao carregar lançamentos
@@ -236,14 +236,14 @@ export function LancamentosFinanceirosGrid() {
             placeholder="Buscar descrição ou observações..."
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            className="w-full px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-orange transition-colors"
+            className="w-full px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-black transition-colors"
           />
         </div>
 
         <select
           value={tipo}
           onChange={(e) => setTipo(e.target.value as TipoLancamento | '')}
-          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-orange transition-colors"
+          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-black transition-colors"
         >
           <option value="">Todos os tipos</option>
           <option value="RECEITA">Entradas</option>
@@ -254,7 +254,7 @@ export function LancamentosFinanceirosGrid() {
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value as StatusLancamento | '')}
-          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-orange transition-colors"
+          className="px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-black transition-colors"
         >
           <option value="">Todos os status</option>
           <option value="PENDENTE">Pendentes</option>
@@ -266,7 +266,7 @@ export function LancamentosFinanceirosGrid() {
             type="checkbox"
             checked={incluirArquivados}
             onChange={(e) => setIncluirArquivados(e.target.checked)}
-            className="accent-orange"
+            className="accent-black"
           />
           Incluir arquivados
         </label>
@@ -282,7 +282,7 @@ export function LancamentosFinanceirosGrid() {
       </div>
 
       <div
-        className="ag-theme-quartz ibeize-grid"
+        className="ag-theme-quartz ecommerce-grid"
         style={{ height: 'calc(100vh - 260px)', minHeight: 500 }}
       >
         <AgGridReact<LancamentoFinanceiro>

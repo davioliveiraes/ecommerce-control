@@ -4,7 +4,7 @@ from django.core import signing
 from django.core.signing import BadSignature, SignatureExpired
 from ninja.security import HttpBearer
 
-AUTH_TOKEN_SALT = "ibeize.auth.token"
+AUTH_TOKEN_SALT = "ecommerce.auth.token"
 
 
 def create_auth_token(user) -> str:

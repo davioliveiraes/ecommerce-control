@@ -4,11 +4,14 @@ from django.db import migrations, models
 def criar_categorias_padrao(apps, schema_editor):
     CategoriaFinanceira = apps.get_model("finance", "CategoriaFinanceira")
     categorias = [
-        ("NuvemPago", "nuvempago", "#1f4f8f"),
-        ("NuvemShop", "nuvemshop", "#f97316"),
-        ("GoDaddy", "godaddy", "#111827"),
-        ("Email Profissional", "email-profissional", "#2563eb"),
-        ("Salário Analista Ecommerce", "salario-analista-ecommerce", "#737373"),
+        ("Vendas NuvemShop", "vendas-nuvemshop", "#0A0A0A"),
+        ("Plano NuvemShop", "nuvemshop-plano", "#262626"),
+        ("Hospedagem & Domínio", "hospedagem-dominio", "#404040"),
+        ("E-mail Profissional", "email-profissional", "#525252"),
+        ("Equipe Ecommerce", "equipe-ecommerce", "#737373"),
+        ("Marketing & Tráfego", "marketing-trafego", "#8A8A8A"),
+        ("Taxas de Meios de Pagamento", "taxas-meios-pagamento", "#A3A3A3"),
+        ("Embalagens & Frete", "embalagens-frete", "#BFBFBF"),
     ]
     for nome, slug, cor_hex in categorias:
         CategoriaFinanceira.objects.get_or_create(

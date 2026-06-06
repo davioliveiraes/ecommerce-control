@@ -7,17 +7,22 @@
 
   --color-white: #FFFFFF;
   --color-black: #0A0A0A;
-  --color-orange: oklch(0.72 0.180 55);
-  --color-orange-dark: oklch(0.64 0.180 50);
-  --color-orange-soft: oklch(0.96 0.030 60);
-  --color-navy: oklch(0.28 0.100 252);
-  --color-navy-dark: oklch(0.22 0.100 252);
 
   --color-gray-50: oklch(0.985 0 0);
   --color-gray-100: oklch(0.96 0 0);
   --color-gray-200: oklch(0.92 0 0);
+  --color-gray-300: oklch(0.86 0 0);
   --color-gray-400: oklch(0.70 0 0);
+  --color-gray-500: oklch(0.58 0 0);
   --color-gray-600: oklch(0.46 0 0);
+  --color-gray-700: oklch(0.36 0 0);
+  --color-gray-800: oklch(0.24 0 0);
+  --color-gray-900: oklch(0.16 0 0);
+
+  /* Acento sutil: azul-quase-preto, usado apenas em CTAs primários e focos */
+  --color-accent: #1a1a2e;
+  --color-accent-dark: #0f0f1e;
+  --color-accent-soft: #f4f4f7;
 }
 
 html, body, #root {
@@ -53,11 +58,11 @@ button:disabled,
   font-size: 0.6875rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-orange);
+  color: var(--color-gray-500);
 }
 
 /* AG Grid — wrap text cells (descrições longas) */
-.ibeize-grid .ag-cell.ag-cell-wrap-text {
+.ecommerce-grid .ag-cell.ag-cell-wrap-text {
   white-space: normal !important;
   word-break: break-word;
   line-height: 1.4 !important;
@@ -66,25 +71,25 @@ button:disabled,
   display: flex;
   align-items: center;
 }
-.ibeize-grid .ag-row {
+.ecommerce-grid .ag-row {
   border-bottom: 1px solid var(--color-gray-100);
 }
 
-.ibeize-catalog-grid .ag-row-even .ag-cell {
-  background-color: #ffffff;
+.ecommerce-catalog-grid .ag-row-even .ag-cell {
+  background-color: var(--color-white);
 }
 
-.ibeize-catalog-grid .ag-row-odd .ag-cell {
-  background-color: #fff4ec;
+.ecommerce-catalog-grid .ag-row-odd .ag-cell {
+  background-color: var(--color-gray-50);
 }
 
-.ibeize-catalog-grid .ag-row-hover .ag-cell {
-  background-color: #ffeada !important;
+.ecommerce-catalog-grid .ag-row-hover .ag-cell {
+  background-color: var(--color-gray-100) !important;
 }
 
-.ibeize-catalog-grid .promo-price-cell span,
-.ibeize-catalog-grid .promo-margin-cell span {
-  color: #cf5608;
+.ecommerce-catalog-grid .promo-price-cell span,
+.ecommerce-catalog-grid .promo-margin-cell span {
+  color: var(--color-black);
   font-weight: 700;
 }
 
@@ -101,7 +106,7 @@ button:disabled,
   }
   .form-input:focus {
     outline: none;
-    border-color: var(--color-orange);
+    border-color: var(--color-black);
   }
   textarea.form-input {
     resize: vertical;

@@ -88,4 +88,4 @@ CORS_ALLOWED_ORIGINS = env.list(
 
 AUTH_TOKEN_MAX_AGE_SECONDS = env.int("AUTH_TOKEN_MAX_AGE_SECONDS", default=60 * 60 * 12)
 
-TEST_RUNNER = "config.test_runner.IbeizeTestRunner"
+TEST_RUNNER = "config.test_runner.AppsTestRunner"

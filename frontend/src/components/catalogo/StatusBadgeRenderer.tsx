@@ -7,13 +7,13 @@ export function StatusBadgeRenderer(params: ICellRendererParams) {
     <span
       className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium border ${
         isAtivo
-          ? 'border-navy/30 text-navy bg-navy/[0.04]'
+          ? 'border-black/30 text-black bg-black/[0.04]'
           : 'border-gray-200 text-gray-600 bg-gray-50'
       }`}
     >
       <span
         className={`h-1.5 w-1.5 rounded-full ${
-          isAtivo ? 'bg-navy' : 'bg-gray-400'
+          isAtivo ? 'bg-black' : 'bg-gray-400'
         }`}
       />
       {isAtivo ? 'Ativo' : 'Inativo'}

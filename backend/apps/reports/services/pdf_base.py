@@ -1,4 +1,4 @@
-"""Template base para PDFs do Controle Interno Site Ibeize."""
+"""Template base para PDFs do Controle Interno — {{COMPANY_NAME}}."""
 
 from io import BytesIO
 from xml.sax.saxutils import escape
@@ -19,10 +19,10 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-COR_PRIMARIA = colors.HexColor("#1A1F3A")
-COR_DESTAQUE = colors.HexColor("#FF6B1A")
-COR_TEXTO = colors.HexColor("#1F2937")
-COR_CINZA_CLARO = colors.HexColor("#F3F4F6")
+COR_PRIMARIA = colors.HexColor("#0A0A0A")
+COR_DESTAQUE = colors.HexColor("#404040")
+COR_TEXTO = colors.HexColor("#1F1F1F")
+COR_CINZA_CLARO = colors.HexColor("#F4F4F5")
 
 
 def _texto(valor: object) -> str:
@@ -36,7 +36,7 @@ def cabecalho_rodape(canvas, doc):
 
     canvas.setFillColor(COR_PRIMARIA)
     canvas.setFont("Helvetica-Bold", 12)
-    canvas.drawString(2 * cm, altura - 1.5 * cm, "IBEIZE ECOMMERCE CONTROL")
+    canvas.drawString(2 * cm, altura - 1.5 * cm, "{{COMPANY_NAME}} — ECOMMERCE CONTROL")
 
     canvas.setFillColor(COR_DESTAQUE)
     canvas.setFont("Helvetica", 9)
@@ -53,7 +53,7 @@ def cabecalho_rodape(canvas, doc):
 
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(COR_TEXTO)
-    canvas.drawString(2 * cm, 1 * cm, f"Página {doc.page} · Controle Interno Site Ibeize")
+    canvas.drawString(2 * cm, 1 * cm, f"Página {doc.page} · Controle Interno — {{{{COMPANY_NAME}}}}")
 
     canvas.restoreState()
 
@@ -321,7 +321,7 @@ class RelatorioPDF:
         doc.subtitulo = self.subtitulo
 
         frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="normal")
-        template = PageTemplate(id="ibeize", frames=frame, onPage=cabecalho_rodape)
+        template = PageTemplate(id="ecommerce", frames=frame, onPage=cabecalho_rodape)
         doc.addPageTemplates([template])
         doc.build(self.elementos)
         return self.buffer.getvalue()
