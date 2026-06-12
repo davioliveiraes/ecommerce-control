@@ -48,33 +48,43 @@ export function DemoDataBanner({ source, endpoints }: Props) {
               Cadastre uma aplicação em{' '}
               <code className="font-mono text-[11px]">
                 partners.nuvemshop.com.br
-              </code>{' '}
-              e obtenha as credenciais OAuth (
-              <code className="font-mono text-[11px]">client_id</code>,{' '}
-              <code className="font-mono text-[11px]">client_secret</code>).
+              </code>
+              , obtenha <code className="font-mono text-[11px]">client_id</code>{' '}
+              /{' '}
+              <code className="font-mono text-[11px]">client_secret</code> e
+              rode o OAuth code-grant para trocar o{' '}
+              <code className="font-mono text-[11px]">code</code> da loja por
+              um <code className="font-mono text-[11px]">access_token</code>{' '}
+              persistente.
             </li>
             <li>
               No backend, troque o serviço{' '}
               <code className="font-mono text-[11px]">
                 finance/services/analytics_service.py
               </code>{' '}
-              por chamadas à API Nuvemshop, mantendo o mesmo formato de
-              resposta dos schemas em{' '}
+              por chamadas à API real, preservando os schemas em{' '}
               <code className="font-mono text-[11px]">
                 finance/routers/analytics.py
+              </code>{' '}
+              (o frontend não muda).
+            </li>
+            <li>
+              Toda chamada precisa de{' '}
+              <code className="font-mono text-[11px]">
+                Authentication: bearer &lt;token&gt;
+              </code>{' '}
+              e{' '}
+              <code className="font-mono text-[11px]">
+                User-Agent: App (contato@dominio)
               </code>
-              .
+              . Sem User-Agent, retorna 400.
             </li>
             <li>
-              Persista o <code className="font-mono text-[11px]">access_token</code> da loja
-              conectada e ajuste o middleware de autenticação para incluí-lo
-              nas chamadas (<code className="font-mono text-[11px]">Authentication: bearer ...</code>).
-            </li>
-            <li>
-              O frontend não precisa mudar — os hooks{' '}
-              <code className="font-mono text-[11px]">fetchAnalyticsOverview()</code> e{' '}
-              <code className="font-mono text-[11px]">fetchAnalyticsProdutos()</code>{' '}
-              consomem o mesmo contrato.
+              Respeite o rate limit (40 req de bucket, 2 req/s) e a paginação
+              via <code className="font-mono text-[11px]">page</code> /{' '}
+              <code className="font-mono text-[11px]">per_page</code> (máx.
+              200). Métricas de visita/conversão{' '}
+              <em>não existem</em> na API — plugue GA4 ou Plausible.
             </li>
           </ol>
 
@@ -116,10 +126,10 @@ export function DemoDataBanner({ source, endpoints }: Props) {
           </div>
 
           <p className="mt-3 font-mono text-[11px] text-gray-600">
-            Documentação oficial: api.nuvemshop.com.br · A guia completa de
-            integração ficará em{' '}
-            <code className="text-[11px]">docs/INTEGRACAO_NUVEMSHOP.md</code>{' '}
-            (em construção).
+            Documentação oficial:{' '}
+            <span className="text-black">tiendanube.github.io/api-documentation</span>{' '}
+            · Guia de integração passo a passo em{' '}
+            <code className="text-[11px]">docs/INTEGRACAO_NUVEMSHOP.md</code>.
           </p>
         </div>
       )}

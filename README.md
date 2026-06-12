@@ -162,6 +162,8 @@ ecommerce_internal_suite/
 
 Documentação técnica detalhada: [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 
+Para conectar a uma loja Nuvemshop real (OAuth, mapeamento endpoint-a-endpoint, rate limit, webhooks): [docs/INTEGRACAO_NUVEMSHOP.md](docs/INTEGRACAO_NUVEMSHOP.md).
+
 ## Decisões de design relevantes
 
 - **Sem libs de gráfico**. Todos os charts (linha, donut, barras horizontais/verticais, sparkline) são SVG cru. Zero dependência de Recharts/Chart.js — controle visual total e bundle menor.

@@ -7,23 +7,27 @@ import { DemoDataBanner } from './DemoDataBanner'
 const NUVEMSHOP_PRODUCTS_ENDPOINTS = [
   {
     method: 'GET',
-    path: '/v1/{store_id}/products',
-    descricao: 'Catálogo completo: nome, marca, preço, variações e estoque.',
+    path: '/2025-03/{store_id}/products?per_page=200',
+    descricao:
+      'Catálogo paginado (máx. 200/página): nome, marca, variantes, estoque.',
   },
   {
     method: 'GET',
-    path: '/v1/{store_id}/products/{id}/variants',
-    descricao: 'Variações com estoque atual por SKU — base do ranking de estoque crítico.',
+    path: '/2025-03/{store_id}/products/{id}/variants',
+    descricao:
+      'Variantes com estoque atual por SKU — base do ranking de estoque crítico.',
   },
   {
     method: 'GET',
-    path: '/v1/{store_id}/orders?per_page=200&fields=products',
-    descricao: 'Linhas de pedidos pagos → unidades vendidas e receita por SKU.',
+    path: '/2025-03/{store_id}/orders?payment_status=paid&fields=products',
+    descricao:
+      'Linhas de pedidos pagos → unidades vendidas e receita por SKU/variant.',
   },
   {
     method: 'GET',
-    path: 'GA4 / Plausible / Analytics Nuvemshop',
-    descricao: 'Visualizações de produto (page views) para o ranking "mais visualizados".',
+    path: 'GA4 / Plausible (telemetria externa)',
+    descricao:
+      'Page views por produto — base do ranking de "mais visualizados".',
   },
 ]
 

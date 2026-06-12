@@ -14,18 +14,19 @@ import { MiniSparkline } from './MiniSparkline'
 const NUVEMSHOP_OVERVIEW_ENDPOINTS = [
   {
     method: 'GET',
-    path: '/v1/{store_id}/orders?paid_status=paid&created_at_min=...',
+    path: '/2025-03/{store_id}/orders?payment_status=paid&created_at_min=...',
     descricao: 'Pedidos pagos no período → vendas, receita, ticket médio.',
   },
   {
     method: 'GET',
-    path: '/v1/{store_id}/orders?status=open',
-    descricao: 'Carrinhos abandonados → checkouts iniciados sem conversão.',
+    path: '/2025-03/{store_id}/orders?status=open&payment_status=abandoned',
+    descricao: 'Checkouts abandonados → funil de checkout (iniciado vs. pago).',
   },
   {
     method: 'GET',
-    path: 'Analytics API (beta) ou GA4 / Plausible',
-    descricao: 'Visitas, visualizações de categoria e produto (telemetria externa).',
+    path: 'GA4 / Plausible (telemetria externa)',
+    descricao:
+      'Visitas, visualizações de categoria e produto — a API Nuvemshop não expõe esses contadores.',
   },
 ]
 
