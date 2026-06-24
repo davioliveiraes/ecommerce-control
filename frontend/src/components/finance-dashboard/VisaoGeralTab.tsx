@@ -13,6 +13,7 @@ import type {
 } from '../../types/visaoGeral'
 import { formatCurrency, formatPercent } from '../../utils/format'
 import { OPERATION_START_DATE, getTodayInputValue } from '../../utils/dateRange'
+import { useDownloadPdf } from '../../hooks/useDownloadPdf'
 import { MiniSparkline, type SparkFormato } from './MiniSparkline'
 import { VisaoGeralPeriodoForm } from './VisaoGeralPeriodoForm'
 
@@ -44,6 +45,7 @@ export function VisaoGeralTab() {
   const [modal, setModal] = useState<ModalState>({ open: false, editing: null })
   const [filtroInicio, setFiltroInicio] = useState(OPERATION_START_DATE)
   const [filtroFim, setFiltroFim] = useState(getTodayInputValue())
+  const { download, isDownloading } = useDownloadPdf()
 
   const query = useQuery({
     queryKey: ['visao-geral-periodos'],
@@ -106,10 +108,14 @@ export function VisaoGeralTab() {
   const maisRecente = periodosFiltrados[0] ?? null
   const temDados = periodosFiltrados.length > 0
 
-  const handleExportarPdf = () => {
-    // TODO: implementar formatação e geração do PDF a partir do filtro de data.
-    window.alert(
-      'Exportação do relatório de Visão Geral será implementada em breve.',
+  const handleExportarPdf = async () => {
+    await download(
+      '/reports/visao-geral/pdf',
+      {
+        data_inicio: filtroInicio || undefined,
+        data_fim: filtroFim || undefined,
+      },
+      `visao-geral-${filtroInicio || 'inicio'}_${filtroFim || 'hoje'}.pdf`,
     )
   }
 
@@ -187,8 +193,6 @@ export function VisaoGeralTab() {
 
   return (
     <div className="space-y-5">
-      <InternalControlNote />
-
       <header className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <div className="kicker">Estatísticas</div>
@@ -237,10 +241,11 @@ export function VisaoGeralTab() {
             <button
               type="button"
               onClick={handleExportarPdf}
-              className="inline-flex items-center gap-1.5 border border-black bg-white px-3 py-1.5 text-sm text-black hover:bg-gray-100 transition-colors"
+              disabled={isDownloading}
+              className="inline-flex items-center gap-1.5 border border-black bg-white px-3 py-1.5 text-sm text-black hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               <IconDownload />
-              Exportar Relatório PDF
+              {isDownloading ? 'Gerando...' : 'Exportar Relatório PDF'}
             </button>
             {maisRecente && (
               <>
@@ -395,19 +400,6 @@ export function VisaoGeralTab() {
         onSubmit={handleSubmit}
       />
     </div>
-  )
-}
-
-function InternalControlNote() {
-  return (
-    <aside className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-black bg-gray-50 px-4 py-3">
-      <span className="inline-flex items-center border border-black bg-black px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
-        Controle interno
-      </span>
-      <span className="text-sm text-gray-700">
-        Dados alimentados com as informações da NuvemShop.
-      </span>
-    </aside>
   )
 }
 

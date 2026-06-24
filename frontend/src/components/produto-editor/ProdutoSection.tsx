@@ -44,20 +44,6 @@ export function ProdutoSection({ marcas, subcategorias }: Props) {
         </div>
 
         <div>
-          <FieldLabel>Nome curto (NuvemShop)</FieldLabel>
-          <input type="text" {...register('nome_site')} className="form-input" />
-        </div>
-
-        <div>
-          <FieldLabel>Nome curto (GestãoClick)</FieldLabel>
-          <input
-            type="text"
-            {...register('nome_gestaoclick')}
-            className="form-input"
-          />
-        </div>
-
-        <div>
           <FieldLabel>Marca</FieldLabel>
           <select
             {...register('marca_id', {

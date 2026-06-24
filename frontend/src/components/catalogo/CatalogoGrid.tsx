@@ -117,30 +117,25 @@ export function CatalogoGrid() {
       {
         field: 'sku_nuvemshop',
         headerName: 'SKU',
-        minWidth: 200,
+        width: 150,
         flex: 0,
         cellClass: 'font-mono text-xs',
         tooltipField: 'sku_nuvemshop',
       },
       {
-        colId: 'descricao_site_group',
         field: 'produto_descricao_site',
-        rowGroup: true,
-        hide: true,
-      },
-      {
-        field: 'produto_descricao_gestaoclick',
-        headerName: 'Descrição (GestãoClick)',
-        minWidth: 260,
+        headerName: 'Descrição (NuvemShop)',
+        minWidth: 240,
+        flex: 1,
         wrapText: true,
         autoHeight: true,
         cellClass: 'ag-cell-wrap-text leading-snug',
       },
       {
-        colId: 'descricao_nuvemshop',
-        field: 'produto_descricao_site',
-        headerName: 'Descrição (NuvemShop)',
-        minWidth: 280,
+        field: 'produto_descricao_gestaoclick',
+        headerName: 'Descrição (GestãoClick)',
+        minWidth: 240,
+        flex: 1,
         wrapText: true,
         autoHeight: true,
         cellClass: 'ag-cell-wrap-text leading-snug',
@@ -148,18 +143,21 @@ export function CatalogoGrid() {
       {
         field: 'descricao',
         headerName: 'Variação',
-        minWidth: 140,
+        width: 120,
+        flex: 0,
         tooltipField: 'descricao',
       },
       {
         field: 'custo',
         headerName: 'Custo',
-        minWidth: 110,
+        width: 120,
+        flex: 0,
         cellRenderer: MoneyCellRenderer,
         cellEditor: MoneyCellEditor,
         editable: true,
         cellClass: 'editable-cell',
         type: 'numericColumn',
+        cellDataType: false,
         valueSetter: (params: ValueSetterParams<Variacao>) => {
           const novo = toNumber(params.newValue)
           if (novo === null || novo < 0) return false
@@ -178,12 +176,14 @@ export function CatalogoGrid() {
       {
         field: 'preco_loja',
         headerName: 'Preço Loja',
-        minWidth: 110,
+        width: 125,
+        flex: 0,
         cellRenderer: MoneyCellRenderer,
         cellEditor: MoneyCellEditor,
         editable: true,
         cellClass: 'editable-cell',
         type: 'numericColumn',
+        cellDataType: false,
         valueSetter: (params: ValueSetterParams<Variacao>) => {
           const novo = toNumber(params.newValue)
           if (novo === null || novo < 0) return false
@@ -194,12 +194,14 @@ export function CatalogoGrid() {
       {
         field: 'preco_site',
         headerName: 'Preço Site',
-        minWidth: 110,
+        width: 125,
+        flex: 0,
         cellRenderer: MoneyCellRenderer,
         cellEditor: MoneyCellEditor,
         editable: true,
         cellClass: 'editable-cell',
         type: 'numericColumn',
+        cellDataType: false,
         valueSetter: (params: ValueSetterParams<Variacao>) => {
           const novo = toNumber(params.newValue)
           if (novo !== null && novo < 0) return false
@@ -212,12 +214,14 @@ export function CatalogoGrid() {
       {
         field: 'preco_promocional',
         headerName: 'Preço Promocional',
-        minWidth: 150,
+        width: 150,
+        flex: 0,
         cellClass: 'promo-price-cell editable-cell',
         cellRenderer: MoneyCellRenderer,
         cellEditor: MoneyCellEditor,
         editable: true,
         type: 'numericColumn',
+        cellDataType: false,
         valueSetter: (params: ValueSetterParams<Variacao>) => {
           const novo = toNumber(params.newValue)
           if (novo !== null && novo < 0) return false
@@ -233,14 +237,16 @@ export function CatalogoGrid() {
       {
         field: 'margem_percentual',
         headerName: 'Margem %',
-        minWidth: 110,
+        width: 120,
+        flex: 0,
         cellRenderer: PercentCellRenderer,
         type: 'numericColumn',
       },
       {
         field: 'margem_promocional_percentual',
         headerName: 'Margem Promoção',
-        minWidth: 145,
+        width: 140,
+        flex: 0,
         cellClass: 'promo-margin-cell',
         cellRenderer: PercentCellRenderer,
         type: 'numericColumn',
@@ -248,21 +254,24 @@ export function CatalogoGrid() {
       {
         field: 'status_nuvemshop',
         headerName: 'Status NS',
-        minWidth: 120,
+        width: 120,
+        flex: 0,
         cellRenderer: StatusBadgeRenderer,
-        filter: 'agSetColumnFilter',
+        filter: 'agTextColumnFilter',
       },
       {
         field: 'status_integracao',
         headerName: 'Status Int.',
-        minWidth: 120,
+        width: 120,
+        flex: 0,
         cellRenderer: StatusBadgeRenderer,
-        filter: 'agSetColumnFilter',
+        filter: 'agTextColumnFilter',
       },
       {
         headerName: 'Ações',
         cellRenderer: AcoesCellRenderer,
-        minWidth: 170,
+        width: 150,
+        flex: 0,
         sortable: false,
         filter: false,
         pinned: 'right',
@@ -279,6 +288,11 @@ export function CatalogoGrid() {
       sortable: true,
       filter: 'agTextColumnFilter',
       floatingFilter: true,
+      // Os valores vêm da API como string ("28.00"); o AG Grid 35 inferiria o
+      // cellDataType como 'text' e DESCARTARIA o número devolvido pelo editor
+      // (warning #135), bloqueando a edição. Desligamos a inferência para que o
+      // valueSetter controle o valor livremente.
+      cellDataType: false,
     }),
     [],
   )
@@ -325,18 +339,6 @@ export function CatalogoGrid() {
         selectAll: 'Selecionar tudo',
         searchOoo: 'Buscar...',
       },
-      autoGroupColumnDef: {
-        headerName: 'Produto',
-        minWidth: 320,
-        wrapText: true,
-        autoHeight: true,
-        cellClass: 'ag-cell-wrap-text leading-snug',
-        cellRendererParams: {
-          suppressCount: false,
-        },
-      },
-      groupDisplayType: 'singleColumn',
-      groupDefaultExpanded: 0,
       animateRows: true,
     }),
     [searchText],

@@ -51,8 +51,8 @@ O repositório é um **template portfólio**: vem com seed determinístico (~30 
 
 Dashboard em **2 abas**:
 
-1. **Visão geral** — Métricas da loja (visitas, vendas, receita, ticket médio com sparklines; funis de comportamento e checkout; conversões) preenchidas **manualmente pelo analista** a partir dos relatórios da NuvemShop, por período livre. CRUD completo de períodos — controle interno, sem integração de API.
-2. **Financeiro** — KPIs (receita, custo, despesa, lucro), linha temporal mensal, donut de categorias, estatísticas por forma de pagamento (Pix, cartão, boleto — todas recebidas pela conta NuvemShop) e exportação PDF.
+1. **Visão geral** — Métricas da loja (visitas, vendas, receita, ticket médio com sparklines; funis de comportamento e checkout; conversões) preenchidas **manualmente pelo analista** a partir dos relatórios da NuvemShop, por período livre. CRUD completo de períodos e **exportação de um relatório PDF de desempenho** (banner, KPIs, funil de conversão, leituras e recomendações). Controle interno, sem integração de API.
+2. **Financeiro** — KPIs (receita, custo, despesa, lucro), linha temporal mensal, donut de categorias, estatísticas por forma de pagamento (Pix, cartão, boleto — todas recebidas pela conta NuvemShop) e **relatório PDF financeiro** no mesmo layout (KPIs, evolução mensal, composição por categoria, leituras e recomendações).
 
 ### Lançamentos financeiros
 

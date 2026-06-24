@@ -15,7 +15,11 @@ from finance.routers import (
     dashboard_router as finance_dashboard_router,
     visao_geral_router as finance_visao_geral_router,
 )
-from reports.routers import catalog_report_router, finance_report_router
+from reports.routers import (
+    catalog_report_router,
+    finance_report_router,
+    visao_geral_report_router,
+)
 
 api = NinjaAPI(
     title="Controle Interno — {{COMPANY_NAME}} API",
@@ -45,3 +49,4 @@ api.add_router("/finance/visao-geral", finance_visao_geral_router, auth=auth)
 
 api.add_router("/reports/catalog", catalog_report_router, auth=auth)
 api.add_router("/reports/finance", finance_report_router, auth=auth)
+api.add_router("/reports/visao-geral", visao_geral_report_router, auth=auth)

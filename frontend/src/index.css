@@ -96,22 +96,6 @@ button:disabled,
 /* AG Grid — inline editing (preços e margem) */
 .ecommerce-grid .editable-cell {
   cursor: cell;
-  position: relative;
-}
-.ecommerce-grid .editable-cell::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-bottom: 4px solid var(--color-gray-300);
-  opacity: 0;
-  transition: opacity 120ms ease;
-}
-.ecommerce-grid .editable-cell:hover::after {
-  opacity: 1;
 }
 .ecommerce-grid .ag-cell-inline-editing {
   padding: 0 !important;

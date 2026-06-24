@@ -5,8 +5,26 @@ from django.http import HttpResponse
 from ninja import Query, Router
 
 from reports.services.finance_report import gerar_relatorio_finance
+from reports.services.finance_dashboard_report import gerar_relatorio_finance_dashboard
 
 router = Router(tags=["reports:finance"])
+
+
+@router.get("/dashboard/pdf")
+def relatorio_finance_dashboard_pdf(
+    request,
+    data_inicio: Optional[date] = None,
+    data_fim: Optional[date] = None,
+    categoria_id: Optional[int] = None,
+):
+    pdf_bytes = gerar_relatorio_finance_dashboard(
+        data_inicio=data_inicio,
+        data_fim=data_fim,
+        categoria_id=categoria_id,
+    )
+    response = HttpResponse(pdf_bytes, content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="ecommerce-financeiro.pdf"'
+    return response
 
 
 @router.get("/pdf")

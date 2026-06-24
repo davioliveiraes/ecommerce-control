@@ -14,6 +14,7 @@ import { PaymentStatisticsPanel } from '../components/finance-dashboard/PaymentS
 import { TimelineChart } from '../components/finance-dashboard/TimelineChart'
 import { VisaoGeralTab } from '../components/finance-dashboard/VisaoGeralTab'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { useDownloadPdf } from '../hooks/useDownloadPdf'
 import { OPERATION_START_DATE, getTodayInputValue } from '../utils/dateRange'
 import type { FinancePeriodoCategoria, TipoLancamento } from '../types/finance'
 
@@ -95,6 +96,7 @@ function FinanceiroTab() {
   const [dataFim, setDataFim] = useState(getTodayInputValue())
   const [categoriaId, setCategoriaId] = useState<number | null>(null)
   const [tipoCategoria, setTipoCategoria] = useState<TipoLancamento | ''>('')
+  const { download, isDownloading } = useDownloadPdf()
 
   const dashboardQuery = useQuery({
     queryKey: [
@@ -142,24 +144,20 @@ function FinanceiroTab() {
     }
   }
 
-  const handleExportarPdf = () => {
-    // TODO: implementar nova lógica de exportação do relatório financeiro.
-    window.alert(
-      'Exportação do relatório financeiro será implementada em breve.',
+  const handleExportarPdf = async () => {
+    await download(
+      '/reports/finance/dashboard/pdf',
+      {
+        data_inicio: dataInicio || undefined,
+        data_fim: dataFim || undefined,
+        categoria_id: categoriaId ?? undefined,
+      },
+      `financeiro-${dataInicio || 'inicio'}_${dataFim || 'hoje'}.pdf`,
     )
   }
 
   return (
     <div className="space-y-5">
-      <aside className="flex flex-wrap items-center gap-x-3 gap-y-1 border border-black bg-gray-50 px-4 py-3">
-        <span className="inline-flex items-center border border-black bg-black px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white">
-          Controle interno
-        </span>
-        <span className="text-sm text-gray-700">
-          Resultados do setor de Ecommerce da Empresa.
-        </span>
-      </aside>
-
       <header className="flex flex-col gap-4">
         <div className="flex flex-col gap-1">
           <div className="kicker">Dashboard</div>
@@ -184,10 +182,11 @@ function FinanceiroTab() {
             <button
               type="button"
               onClick={handleExportarPdf}
-              className="inline-flex items-center gap-1.5 border border-black bg-white px-3 py-1.5 text-sm text-black hover:bg-gray-100 transition-colors"
+              disabled={isDownloading}
+              className="inline-flex items-center gap-1.5 border border-black bg-white px-3 py-1.5 text-sm text-black hover:bg-gray-100 transition-colors disabled:opacity-50"
             >
               <IconDownload />
-              Exportar Relatório PDF
+              {isDownloading ? 'Gerando...' : 'Exportar Relatório PDF'}
             </button>
 
             <Link

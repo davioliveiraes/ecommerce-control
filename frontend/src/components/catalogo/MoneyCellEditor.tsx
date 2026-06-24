@@ -1,10 +1,4 @@
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react'
+import { useEffect, useRef } from 'react'
 import type { CustomCellEditorProps } from 'ag-grid-react'
 
 function parseLocaleNumber(raw: string): number | null {
@@ -24,48 +18,43 @@ function parseLocaleNumber(raw: string): number | null {
 
 function initialFromValue(value: unknown): string {
   if (value === null || value === undefined || value === '') return ''
-  const str = String(value)
-  const num = parseFloat(str)
+  const num = parseFloat(String(value))
   if (isNaN(num)) return ''
-  return num
-    .toFixed(2)
-    .replace('.', ',')
+  return num.toFixed(2).replace('.', ',')
 }
 
-export const MoneyCellEditor = forwardRef(function MoneyCellEditor(
-  props: CustomCellEditorProps,
-  ref,
-) {
-  const [value, setValue] = useState<string>(() => initialFromValue(props.value))
+/**
+ * Editor de célula para preços (AG Grid 35, API funcional).
+ *
+ * Usa input NÃO-CONTROLADO (defaultValue + ref) para que os re-renders que o
+ * AG Grid dispara a cada onValueChange não atrapalhem a digitação. O valor
+ * confirmado no Enter é o último número passado a onValueChange (o grid o lê
+ * via getValue). Aceita vírgula ou ponto como separador decimal.
+ * Enter confirma, Esc cancela.
+ */
+export function MoneyCellEditor({ value, onValueChange }: CustomCellEditorProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const el = inputRef.current
-    if (!el) return
-    el.focus()
-    el.select()
+    if (el) {
+      el.focus()
+      el.select()
+    }
   }, [])
 
-  useImperativeHandle(ref, () => ({
-    getValue() {
-      return parseLocaleNumber(value)
-    },
-    isCancelBeforeStart() {
-      return false
-    },
-    isCancelAfterEnd() {
-      return false
-    },
-  }))
+  const handleChange = (raw: string) => {
+    onValueChange(parseLocaleNumber(raw))
+  }
 
   return (
     <input
       ref={inputRef}
       type="text"
       inputMode="decimal"
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
+      defaultValue={initialFromValue(value)}
+      onChange={(e) => handleChange(e.target.value)}
       className="ecommerce-cell-editor"
     />
   )
-})
+}
