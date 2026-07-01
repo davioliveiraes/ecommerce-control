@@ -1,28 +1,11 @@
 import { useState } from 'react'
-import type {
-  CategoriaFinanceira,
-  FinanceFatiaCategoria,
-  FinancePeriodoCategoria,
-  TipoLancamento,
-} from '../../types/finance'
+import type { FinanceFatiaCategoria } from '../../types/finance'
 import { formatCurrency } from '../../utils/format'
 
 interface CategoryPieChartProps {
   receitas: FinanceFatiaCategoria[]
   despesas: FinanceFatiaCategoria[]
   custos: FinanceFatiaCategoria[]
-}
-
-interface CategoryFiltersPanelProps extends CategoryPieChartProps {
-  categorias: CategoriaFinanceira[]
-  periodosPorCategoria: FinancePeriodoCategoria[]
-  selectedCategoriaId: number | null
-  onCategoriaChange: (
-    categoriaId: number | null,
-    periodo?: FinancePeriodoCategoria,
-  ) => void
-  selectedTipo: TipoLancamento | ''
-  onTipoChange: (tipo: TipoLancamento | '') => void
 }
 
 interface Slice {
@@ -41,23 +24,6 @@ const FALLBACK_COLORS = [
   '#525252',
   '#262626',
 ]
-
-const CATEGORY_KIND_BY_SLUG: Record<string, TipoLancamento> = {
-  'vendas-nuvemshop': 'RECEITA',
-  'nuvemshop-plano': 'DESPESA',
-  'hospedagem-dominio': 'DESPESA',
-  'email-profissional': 'DESPESA',
-  'equipe-ecommerce': 'DESPESA',
-  'marketing-trafego': 'DESPESA',
-  'taxas-meios-pagamento': 'DESPESA',
-  'embalagens-frete': 'CUSTO',
-}
-
-const TYPE_LABELS: Record<TipoLancamento, string> = {
-  RECEITA: 'Entrada',
-  DESPESA: 'Saída',
-  CUSTO: 'Custo',
-}
 
 export function CategoryPieChart({
   receitas,
@@ -94,131 +60,6 @@ export function CategoryPieChart({
         </div>
       )}
     </section>
-  )
-}
-
-export function CategoryFiltersPanel({
-  receitas,
-  despesas,
-  custos,
-  categorias,
-  periodosPorCategoria,
-  selectedCategoriaId,
-  onCategoriaChange,
-  selectedTipo,
-  onTipoChange,
-}: CategoryFiltersPanelProps) {
-  const slices = buildSlices(receitas, despesas, custos)
-  const totalEntradas = slices.reduce((acc, slice) => acc + slice.entrada, 0)
-  const totalSaidas = slices.reduce((acc, slice) => acc + slice.saida, 0)
-  const activeCategorias = categorias.filter((categoria) => categoria.ativo)
-  const selectedCategoria = activeCategorias.find(
-    (categoria) => categoria.id === selectedCategoriaId,
-  )
-  const lockedTipo = selectedCategoria
-    ? CATEGORY_KIND_BY_SLUG[selectedCategoria.slug]
-    : null
-
-  const handleCategoriaChange = (categoria: CategoriaFinanceira | null) => {
-    const periodo = periodosPorCategoria.find(
-      (item) => item.categoria_id === (categoria?.id ?? null),
-    )
-    onCategoriaChange(categoria?.id ?? null, periodo)
-    const tipo = categoria ? CATEGORY_KIND_BY_SLUG[categoria.slug] : null
-    if (tipo) {
-      onTipoChange(tipo)
-    } else {
-      onTipoChange('')
-    }
-  }
-
-  return (
-    <aside className="flex h-full flex-col border border-gray-200 bg-white p-5">
-      <div className="mb-6">
-        <div className="kicker mb-1">Filtro</div>
-        <h2 className="font-display text-xl font-semibold text-black">
-          Filtros
-        </h2>
-      </div>
-
-      <div className="space-y-6">
-        <div>
-          <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
-            Categoria
-          </label>
-          <div className="max-h-[360px] overflow-y-auto border border-gray-200">
-            <CategoryOption
-              label="Todas as categorias"
-              active={selectedCategoriaId === null}
-              onClick={() => handleCategoriaChange(null)}
-            />
-
-            {activeCategorias.map((categoria) => (
-              <CategoryOption
-                key={categoria.id}
-                label={categoria.nome}
-                kind={CATEGORY_KIND_BY_SLUG[categoria.slug]}
-                active={selectedCategoriaId === categoria.id}
-                onClick={() => handleCategoriaChange(categoria)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
-            Tipo
-          </label>
-          <div className="border border-gray-200 text-sm">
-            <TypeFilterButton
-              label="Todos"
-              active={selectedTipo === ''}
-              onClick={() => onTipoChange('')}
-              disabled={!!lockedTipo}
-            />
-            <TypeFilterButton
-              label="Entrada"
-              active={selectedTipo === 'RECEITA'}
-              onClick={() => onTipoChange('RECEITA')}
-              disabled={!!lockedTipo && lockedTipo !== 'RECEITA'}
-            />
-            <TypeFilterButton
-              label="Saída"
-              active={selectedTipo === 'DESPESA'}
-              onClick={() => onTipoChange('DESPESA')}
-              disabled={!!lockedTipo && lockedTipo !== 'DESPESA'}
-            />
-            <TypeFilterButton
-              label="Custo"
-              active={selectedTipo === 'CUSTO'}
-              onClick={() => onTipoChange('CUSTO')}
-              disabled={!!lockedTipo && lockedTipo !== 'CUSTO'}
-            />
-          </div>
-          {lockedTipo && (
-            <p className="mt-2 text-xs text-gray-600">
-              Categoria travada como {TYPE_LABELS[lockedTipo].toLowerCase()}.
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-auto border-t border-gray-100 pt-5">
-        <div className="kicker mb-3">Valores</div>
-        <div className="space-y-2">
-            <SummaryRow
-              label="Entrada"
-              value={formatCurrency(totalEntradas)}
-              className="text-black"
-            />
-            <SummaryRow
-              label="Saída"
-              value={formatCurrency(totalSaidas)}
-              className="text-gray-700"
-            />
-        </div>
-      </div>
-    </aside>
   )
 }
 
@@ -397,93 +238,6 @@ function LegendAmountRow({
         {value}
       </span>
     </div>
-  )
-}
-
-function SummaryRow({
-  label,
-  value,
-  className,
-}: {
-  label: string
-  value: string
-  className: string
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="text-sm text-gray-600">{label}</span>
-      <span className={`font-mono text-sm tabular-nums ${className}`}>
-        {value}
-      </span>
-    </div>
-  )
-}
-
-function CategoryOption({
-  label,
-  kind,
-  active,
-  onClick,
-}: {
-  label: string
-  kind?: TipoLancamento
-  active: boolean
-  onClick: () => void
-}) {
-  const accentColor = kind ? '#0a0a0a' : '#d4d4d4'
-
-  return (
-    <button
-      type="button"
-      role="option"
-      aria-selected={active}
-      onClick={onClick}
-      className={`flex w-full items-stretch gap-3 px-3 py-2 text-left text-sm transition-colors ${
-        active
-          ? 'bg-black text-white'
-          : 'text-gray-700 hover:bg-gray-50 hover:text-black'
-      }`}
-    >
-      <span
-        className="w-1 shrink-0 self-stretch"
-        style={{ backgroundColor: accentColor }}
-      />
-      <span className="min-w-0 flex-1">
-        <span className="block leading-snug">{label}</span>
-        {kind && (
-          <span className="mt-0.5 block font-mono text-[10px] uppercase tracking-wider text-gray-500">
-            {TYPE_LABELS[kind]}
-          </span>
-        )}
-      </span>
-    </button>
-  )
-}
-
-function TypeFilterButton({
-  label,
-  active,
-  disabled,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  disabled?: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`block w-full border-b border-gray-200 px-3 py-2 text-left transition-colors last:border-b-0 disabled:cursor-not-allowed disabled:opacity-35 ${
-        active
-          ? 'bg-black text-white'
-          : 'bg-white text-gray-700 hover:bg-gray-50 hover:text-black'
-      }`}
-    >
-      {label}
-    </button>
   )
 }
 

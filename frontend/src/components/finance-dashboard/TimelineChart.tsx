@@ -16,9 +16,12 @@ interface HoverState {
   y: number
 }
 
-const WIDTH = 720
-const HEIGHT = 300
-const PADDING = 36
+// viewBox achatado (aspecto largo) para o gráfico preencher o container sem
+// ficar alto demais quando ocupa a largura toda.
+const WIDTH = 1000
+const HEIGHT = 224
+const PADDING_X = 44
+const PADDING_Y = 32
 
 const SERIES = [
   { key: 'receita', label: 'Receita', color: '#0a0a0a' },
@@ -50,15 +53,15 @@ export function TimelineChart({ data, visibleTypes }: Props) {
     1,
     ...parsed.flatMap((point) => activeSeries.map((serie) => point[serie.key])),
   )
-  const chartWidth = WIDTH - PADDING * 2
-  const chartHeight = HEIGHT - PADDING * 2
+  const chartWidth = WIDTH - PADDING_X * 2
+  const chartHeight = HEIGHT - PADDING_Y * 2
 
   const xFor = (index: number) => {
-    if (parsed.length <= 1) return PADDING + chartWidth / 2
-    return PADDING + (index / (parsed.length - 1)) * chartWidth
+    if (parsed.length <= 1) return PADDING_X + chartWidth / 2
+    return PADDING_X + (index / (parsed.length - 1)) * chartWidth
   }
   const yFor = (value: number) => {
-    return PADDING + chartHeight - (value / maxValue) * chartHeight
+    return PADDING_Y + chartHeight - (value / maxValue) * chartHeight
   }
 
   return (
@@ -97,22 +100,22 @@ export function TimelineChart({ data, visibleTypes }: Props) {
             className="w-full h-auto"
           >
             {[0, 0.25, 0.5, 0.75, 1].map((step) => {
-              const y = PADDING + chartHeight - step * chartHeight
+              const y = PADDING_Y + chartHeight - step * chartHeight
               return (
                 <g key={step}>
                   <line
-                    x1={PADDING}
-                    x2={WIDTH - PADDING}
+                    x1={PADDING_X}
+                    x2={WIDTH - PADDING_X}
                     y1={y}
                     y2={y}
                     stroke="#e5e5e5"
                     strokeWidth="1"
                   />
                   <text
-                    x={PADDING}
+                    x={PADDING_X}
                     y={y - 6}
                     fill="#737373"
-                    fontSize="10"
+                    fontSize="9"
                     fontFamily="monospace"
                   >
                     {formatCurrency(maxValue * step)}
@@ -183,9 +186,9 @@ export function TimelineChart({ data, visibleTypes }: Props) {
               <text
                 key={point.mes}
                 x={xFor(index)}
-                y={HEIGHT - 10}
+                y={HEIGHT - 8}
                 fill="#737373"
-                fontSize="11"
+                fontSize="10"
                 fontFamily="monospace"
                 textAnchor="middle"
               >

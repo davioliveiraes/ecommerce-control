@@ -1,16 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchCategoriasFinanceiras } from '../api/categoriasFinanceiras'
 import { fetchFinanceDashboard } from '../api/financeDashboard'
-import {
-  CategoryFiltersPanel,
-  CategoryPieChart,
-} from '../components/finance-dashboard/CategoryPieChart'
-import { PeriodoMesAnoFilter } from '../components/finance-dashboard/PeriodoMesAnoFilter'
+import { fetchVisaoGeralPeriodos } from '../api/visaoGeral'
+import { CategoryPieChart } from '../components/finance-dashboard/CategoryPieChart'
+import { FinanceiroFiltros } from '../components/finance-dashboard/FinanceiroFiltros'
 import { KpiCards } from '../components/finance-dashboard/KpiCards'
-import { PaymentStatisticsPanel } from '../components/finance-dashboard/PaymentStatisticsPanel'
 import { TimelineChart } from '../components/finance-dashboard/TimelineChart'
 import { VisaoGeralTab } from '../components/finance-dashboard/VisaoGeralTab'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
@@ -35,40 +32,143 @@ export function FinancePage() {
 
   const [activeTab, setActiveTab] = useState<TabKey>('visao_geral')
 
+  // Filtro de período da Visão geral, elevado para cá para que o botão
+  // "Exportar Relatório" do cabeçalho use o mesmo intervalo aplicado no filtro.
+  const anosDisponiveis = useMemo(() => getAnosDisponiveis(), [])
+  const hoje = useMemo(() => new Date(), [])
+  const [ano, setAno] = useState(() => hoje.getFullYear())
+  // mes = 0-11, ou null para "Ano inteiro".
+  const [mes, setMes] = useState<number | null>(null)
+
+  const { dataInicio, dataFim } = useMemo(
+    () => (mes === null ? intervaloDoAno(ano) : intervaloDoMes(ano, mes)),
+    [ano, mes],
+  )
+
+  const clearFilters = () => {
+    setAno(hoje.getFullYear())
+    setMes(null)
+  }
+
+  // Última atualização = período mais recente cadastrado na Visão geral.
+  // A query é compartilhada (mesma queryKey) com a VisaoGeralTab via cache.
+  const visaoGeralQuery = useQuery({
+    queryKey: ['visao-geral-periodos'],
+    queryFn: fetchVisaoGeralPeriodos,
+  })
+  const visaoGeralUltimaAtualizacao = formatDateBR(
+    visaoGeralQuery.data?.[0]?.data_fim,
+  )
+
+  // A "última atualização" do Financeiro vem do dashboard (dentro do FinanceiroTab);
+  // o tab reporta o valor para cá para exibirmos no canto da barra de abas.
+  const [financeiroUltimaAtualizacao, setFinanceiroUltimaAtualizacao] =
+    useState<string | null>(null)
+
+  const ultimaAtualizacao =
+    activeTab === 'visao_geral'
+      ? visaoGeralUltimaAtualizacao
+      : financeiroUltimaAtualizacao
+
+  // Parâmetros de exportação do Financeiro, reportados pelo FinanceiroTab, para
+  // que o botão "Exportar Relatório" do cabeçalho funcione também nessa aba.
+  const [financeiroExport, setFinanceiroExport] = useState<{
+    dataInicio: string
+    dataFim: string
+    categoriaId: number | null
+  } | null>(null)
+
+  const { download, isDownloading } = useDownloadPdf()
+
+  const handleExport = async () => {
+    if (activeTab === 'visao_geral') {
+      await download(
+        '/reports/visao-geral/pdf',
+        {
+          data_inicio: dataInicio || undefined,
+          data_fim: dataFim || undefined,
+        },
+        `visao-geral-${dataInicio || 'inicio'}_${dataFim || 'hoje'}.pdf`,
+      )
+      return
+    }
+
+    if (financeiroExport) {
+      await download(
+        '/reports/finance/dashboard/pdf',
+        {
+          data_inicio: financeiroExport.dataInicio || undefined,
+          data_fim: financeiroExport.dataFim || undefined,
+          categoria_id: financeiroExport.categoriaId ?? undefined,
+        },
+        `financeiro-${financeiroExport.dataInicio || 'inicio'}_${financeiroExport.dataFim || 'hoje'}.pdf`,
+      )
+    }
+  }
+
   return (
     <div className="max-w-[1600px] mx-auto px-8 py-6">
-      <FinancePageHeader />
+      <FinancePageHeader onExport={handleExport} isExporting={isDownloading} />
 
       <nav className="mt-6 mb-5 border-b border-gray-200">
-        <div className="flex items-end gap-1 overflow-x-auto">
-          {TABS.map((tab) => {
-            const isActive = tab.key === activeTab
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
-                  isActive ? 'text-black' : 'text-gray-500 hover:text-black'
-                }`}
-              >
-                {tab.label}
-                {isActive && (
-                  <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-black" />
-                )}
-              </button>
-            )
-          })}
+        <div className="flex items-end justify-between gap-4">
+          <div className="flex items-end gap-1 overflow-x-auto">
+            {TABS.map((tab) => {
+              const isActive = tab.key === activeTab
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${
+                    isActive ? 'text-black' : 'text-gray-500 hover:text-black'
+                  }`}
+                >
+                  {tab.label}
+                  {isActive && (
+                    <span className="absolute -bottom-px left-0 right-0 h-0.5 bg-black" />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+
+          {ultimaAtualizacao && (
+            <div className="shrink-0 pb-2.5 font-mono text-xs text-gray-500">
+              Última atualização: {ultimaAtualizacao}
+            </div>
+          )}
         </div>
       </nav>
 
-      {activeTab === 'visao_geral' && <VisaoGeralTab />}
-      {activeTab === 'financeiro' && <FinanceiroTab />}
+      {activeTab === 'visao_geral' && (
+        <VisaoGeralTab
+          ano={ano}
+          mes={mes}
+          anos={anosDisponiveis}
+          onAnoChange={setAno}
+          onMesChange={setMes}
+          onClear={clearFilters}
+          dataInicio={dataInicio}
+          dataFim={dataFim}
+        />
+      )}
+      {activeTab === 'financeiro' && (
+        <FinanceiroTab
+          onUltimaAtualizacaoChange={setFinanceiroUltimaAtualizacao}
+          onExportParamsChange={setFinanceiroExport}
+        />
+      )}
     </div>
   )
 }
 
-function FinancePageHeader() {
+interface FinancePageHeaderProps {
+  onExport: () => void
+  isExporting: boolean
+}
+
+function FinancePageHeader({ onExport, isExporting }: FinancePageHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="min-w-0">
@@ -91,20 +191,40 @@ function FinancePageHeader() {
           <IconHome />
           Inicio
         </Link>
+        <button
+          type="button"
+          onClick={onExport}
+          disabled={isExporting}
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-gray-200 bg-white text-gray-700 hover:border-black hover:text-black transition-colors disabled:opacity-50"
+        >
+          <IconDownload />
+          {isExporting ? 'Gerando...' : 'Exportar Relatório PDF'}
+        </button>
       </div>
     </div>
   )
 }
 
-function FinanceiroTab() {
+interface FinanceiroTabProps {
+  onUltimaAtualizacaoChange: (value: string | null) => void
+  onExportParamsChange: (params: {
+    dataInicio: string
+    dataFim: string
+    categoriaId: number | null
+  }) => void
+}
+
+function FinanceiroTab({
+  onUltimaAtualizacaoChange,
+  onExportParamsChange,
+}: FinanceiroTabProps) {
   const anosDisponiveis = useMemo(() => getAnosDisponiveis(), [])
   const hoje = useMemo(() => new Date(), [])
   const [ano, setAno] = useState(() => hoje.getFullYear())
   // mes = 0-11, ou null para "Ano inteiro".
-  const [mes, setMes] = useState<number | null>(() => hoje.getMonth())
+  const [mes, setMes] = useState<number | null>(null)
   const [categoriaId, setCategoriaId] = useState<number | null>(null)
   const [tipoCategoria, setTipoCategoria] = useState<TipoLancamento | ''>('')
-  const { download, isDownloading } = useDownloadPdf()
 
   const { dataInicio, dataFim } = useMemo(
     () => (mes === null ? intervaloDoAno(ano) : intervaloDoMes(ano, mes)),
@@ -133,15 +253,23 @@ function FinanceiroTab() {
 
   const clearFilters = () => {
     setAno(hoje.getFullYear())
-    setMes(hoje.getMonth())
+    setMes(null)
     setCategoriaId(null)
     setTipoCategoria('')
   }
   const visibleTimelineTypes = tipoCategoria ? [tipoCategoria] : undefined
 
-  const ultimaAtualizacao = formatDateBR(
-    dashboardQuery.data?.periodo_geral?.data_fim,
-  )
+  // Reporta a última atualização para a página exibir no canto da barra de abas.
+  useEffect(() => {
+    onUltimaAtualizacaoChange(
+      formatDateBR(dashboardQuery.data?.periodo_geral?.data_fim),
+    )
+  }, [dashboardQuery.data, onUltimaAtualizacaoChange])
+
+  // Reporta os parâmetros de exportação para o botão do cabeçalho.
+  useEffect(() => {
+    onExportParamsChange({ dataInicio, dataFim, categoriaId })
+  }, [dataInicio, dataFim, categoriaId, onExportParamsChange])
 
   const handleCategoriaChange = (
     nextCategoriaId: number | null,
@@ -160,18 +288,6 @@ function FinanceiroTab() {
     }
   }
 
-  const handleExportarPdf = async () => {
-    await download(
-      '/reports/finance/dashboard/pdf',
-      {
-        data_inicio: dataInicio || undefined,
-        data_fim: dataFim || undefined,
-        categoria_id: categoriaId ?? undefined,
-      },
-      `financeiro-${dataInicio || 'inicio'}_${dataFim || 'hoje'}.pdf`,
-    )
-  }
-
   return (
     <div className="space-y-5">
       <header className="flex flex-col gap-4">
@@ -186,32 +302,22 @@ function FinanceiroTab() {
         </div>
 
         <div className="flex flex-wrap items-end justify-between gap-3 border border-gray-200 bg-gray-50 px-4 py-3">
-          <PeriodoMesAnoFilter
+          <FinanceiroFiltros
             ano={ano}
             mes={mes}
             anos={anosDisponiveis}
             onAnoChange={setAno}
             onMesChange={setMes}
+            categorias={categoriasQuery.data || []}
+            periodosPorCategoria={dashboardQuery.data?.periodos_por_categoria || []}
+            selectedCategoriaId={categoriaId}
+            onCategoriaChange={handleCategoriaChange}
+            selectedTipo={tipoCategoria}
+            onTipoChange={setTipoCategoria}
             onClear={clearFilters}
           />
 
-          {ultimaAtualizacao && (
-            <div className="self-center font-mono text-xs text-gray-500">
-              Última atualização: {ultimaAtualizacao}
-            </div>
-          )}
-
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportarPdf}
-              disabled={isDownloading}
-              className="inline-flex items-center gap-1.5 border border-black bg-white px-3 py-1.5 text-sm text-black hover:bg-gray-100 transition-colors disabled:opacity-50"
-            >
-              <IconDownload />
-              {isDownloading ? 'Gerando...' : 'Exportar Relatório PDF'}
-            </button>
-
             <Link
               to="/finance/lancamentos"
               className="inline-flex items-center gap-1.5 border border-black bg-black px-3 py-1.5 text-sm text-white hover:bg-gray-900 transition-colors"
@@ -245,43 +351,18 @@ function FinanceiroTab() {
         <>
           <KpiCards kpis={dashboardQuery.data.kpis} />
 
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_340px] gap-5 items-stretch">
-            <div className="space-y-5 min-w-0">
-              <TimelineChart
-                data={dashboardQuery.data.serie_mensal}
-                visibleTypes={visibleTimelineTypes}
-              />
+          <div className="space-y-5 min-w-0">
+            <TimelineChart
+              data={dashboardQuery.data.serie_mensal}
+              visibleTypes={visibleTimelineTypes}
+            />
 
-              <CategoryPieChart
-                receitas={dashboardQuery.data.receitas_por_categoria}
-                despesas={dashboardQuery.data.despesas_por_categoria}
-                custos={dashboardQuery.data.custos_por_categoria}
-              />
-            </div>
-
-            <CategoryFiltersPanel
+            <CategoryPieChart
               receitas={dashboardQuery.data.receitas_por_categoria}
               despesas={dashboardQuery.data.despesas_por_categoria}
               custos={dashboardQuery.data.custos_por_categoria}
-              categorias={categoriasQuery.data || []}
-              periodosPorCategoria={
-                dashboardQuery.data.periodos_por_categoria || []
-              }
-              selectedCategoriaId={categoriaId}
-              onCategoriaChange={handleCategoriaChange}
-              selectedTipo={tipoCategoria}
-              onTipoChange={setTipoCategoria}
             />
           </div>
-
-          <PaymentStatisticsPanel
-            formaPagamento={
-              dashboardQuery.data.receita_vendas_por_forma_pagamento
-            }
-            meioPagamento={
-              dashboardQuery.data.receita_vendas_por_meio_pagamento
-            }
-          />
         </>
       )}
     </div>

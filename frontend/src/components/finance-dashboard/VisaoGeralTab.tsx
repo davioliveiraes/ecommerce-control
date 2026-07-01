@@ -12,16 +12,21 @@ import type {
   VisaoGeralPeriodoInput,
 } from '../../types/visaoGeral'
 import { formatCurrency, formatPercent } from '../../utils/format'
-import {
-  formatDateBR,
-  getAnosDisponiveis,
-  intervaloDoAno,
-  intervaloDoMes,
-} from '../../utils/dateRange'
 import { PeriodoMesAnoFilter } from './PeriodoMesAnoFilter'
-import { useDownloadPdf } from '../../hooks/useDownloadPdf'
 import { MiniSparkline, type SparkFormato } from './MiniSparkline'
 import { VisaoGeralPeriodoForm } from './VisaoGeralPeriodoForm'
+
+interface VisaoGeralTabProps {
+  ano: number
+  /** mes = 0-11, ou null para "Ano inteiro". */
+  mes: number | null
+  anos: number[]
+  onAnoChange: (ano: number) => void
+  onMesChange: (mes: number | null) => void
+  onClear: () => void
+  dataInicio: string
+  dataFim: string
+}
 
 interface BehaviorItem {
   label: string
@@ -46,20 +51,18 @@ const TOTAIS_ZERADOS = {
   receita: 0,
 }
 
-export function VisaoGeralTab() {
+export function VisaoGeralTab({
+  ano,
+  mes,
+  anos,
+  onAnoChange,
+  onMesChange,
+  onClear,
+  dataInicio: filtroInicio,
+  dataFim: filtroFim,
+}: VisaoGeralTabProps) {
   const queryClient = useQueryClient()
   const [modal, setModal] = useState<ModalState>({ open: false, editing: null })
-  const anosDisponiveis = useMemo(() => getAnosDisponiveis(), [])
-  const hoje = useMemo(() => new Date(), [])
-  const [ano, setAno] = useState(() => hoje.getFullYear())
-  // mes = 0-11, ou null para "Ano inteiro".
-  const [mes, setMes] = useState<number | null>(() => hoje.getMonth())
-  const { download, isDownloading } = useDownloadPdf()
-
-  const { dataInicio: filtroInicio, dataFim: filtroFim } = useMemo(
-    () => (mes === null ? intervaloDoAno(ano) : intervaloDoMes(ano, mes)),
-    [ano, mes],
-  )
 
   const query = useQuery({
     queryKey: ['visao-geral-periodos'],
@@ -67,8 +70,6 @@ export function VisaoGeralTab() {
   })
 
   const periodos = query.data ?? []
-  // Período mais recente cadastrado (a lista vem em ordem decrescente).
-  const ultimaAtualizacao = formatDateBR(periodos[0]?.data_fim)
   const periodosFiltrados = useMemo(
     () =>
       periodos.filter(
@@ -121,24 +122,9 @@ export function VisaoGeralTab() {
     ? (vendas / totais.checkout_iniciado) * 100
     : 0
 
+  // Editar/Excluir operam sobre o período mais recente dentro do filtro aplicado.
   const maisRecente = periodosFiltrados[0] ?? null
   const temDados = periodosFiltrados.length > 0
-
-  const handleExportarPdf = async () => {
-    await download(
-      '/reports/visao-geral/pdf',
-      {
-        data_inicio: filtroInicio || undefined,
-        data_fim: filtroFim || undefined,
-      },
-      `visao-geral-${filtroInicio || 'inicio'}_${filtroFim || 'hoje'}.pdf`,
-    )
-  }
-
-  const handleLimparFiltros = () => {
-    setAno(hoje.getFullYear())
-    setMes(hoje.getMonth())
-  }
 
   const invalidar = () =>
     queryClient.invalidateQueries({ queryKey: ['visao-geral-periodos'] })
@@ -224,28 +210,13 @@ export function VisaoGeralTab() {
           <PeriodoMesAnoFilter
             ano={ano}
             mes={mes}
-            anos={anosDisponiveis}
-            onAnoChange={setAno}
-            onMesChange={setMes}
-            onClear={handleLimparFiltros}
+            anos={anos}
+            onAnoChange={onAnoChange}
+            onMesChange={onMesChange}
+            onClear={onClear}
           />
 
-          {ultimaAtualizacao && (
-            <div className="self-center font-mono text-xs text-gray-500">
-              Última atualização: {ultimaAtualizacao}
-            </div>
-          )}
-
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportarPdf}
-              disabled={isDownloading}
-              className="inline-flex items-center gap-1.5 border border-black bg-white px-3 py-1.5 text-sm text-black hover:bg-gray-100 transition-colors disabled:opacity-50"
-            >
-              <IconDownload />
-              {isDownloading ? 'Gerando...' : 'Exportar Relatório PDF'}
-            </button>
             {maisRecente && (
               <>
                 <button
@@ -325,8 +296,8 @@ export function VisaoGeralTab() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-3 xl:grid-cols-4">
+            <div className="flex flex-col gap-3 justify-between xl:col-span-3">
               <BehaviorPanel
                 title="Comportamento dos visitantes"
                 info="Funil de navegação dos visitantes na loja."
@@ -365,7 +336,7 @@ export function VisaoGeralTab() {
               />
             </div>
 
-            <div className="space-y-3">
+            <div className="flex flex-col gap-3 justify-between xl:col-span-1">
               <ConversionCard
                 label="Visitas para vendas"
                 percentual={convVisitasVendas}
@@ -605,25 +576,6 @@ function IconPlus() {
     >
       <path d="M12 5v14" />
       <path d="M5 12h14" />
-    </svg>
-  )
-}
-
-function IconDownload() {
-  return (
-    <svg
-      width="13"
-      height="13"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <path d="M7 10l5 5 5-5" />
-      <path d="M12 15V3" />
     </svg>
   )
 }
