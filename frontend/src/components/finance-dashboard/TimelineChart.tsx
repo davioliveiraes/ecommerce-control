@@ -24,9 +24,9 @@ const PADDING_X = 44
 const PADDING_Y = 32
 
 const SERIES = [
-  { key: 'receita', label: 'Receita', color: '#0a0a0a' },
-  { key: 'custo', label: 'Custo', color: '#737373' },
-  { key: 'despesa', label: 'Despesa', color: '#a3a3a3' },
+  { key: 'receita', label: 'Receita', color: 'var(--color-black)' },
+  { key: 'custo', label: 'Custo', color: 'var(--color-gray-500)' },
+  { key: 'despesa', label: 'Despesa', color: 'var(--color-gray-400)' },
 ] as const
 
 const TYPE_TO_SERIES_KEY: Record<TipoLancamento, (typeof SERIES)[number]['key']> = {
@@ -108,13 +108,13 @@ export function TimelineChart({ data, visibleTypes }: Props) {
                     x2={WIDTH - PADDING_X}
                     y1={y}
                     y2={y}
-                    stroke="#e5e5e5"
+                    className="stroke-gray-200"
                     strokeWidth="1"
                   />
                   <text
                     x={PADDING_X}
                     y={y - 6}
-                    fill="#737373"
+                    className="fill-gray-500"
                     fontSize="9"
                     fontFamily="monospace"
                   >
@@ -138,7 +138,7 @@ export function TimelineChart({ data, visibleTypes }: Props) {
                   <path
                     d={d}
                     fill="none"
-                    stroke={serie.color}
+                    style={{ stroke: serie.color }}
                     strokeWidth="2.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -149,8 +149,8 @@ export function TimelineChart({ data, visibleTypes }: Props) {
                         cx={xFor(index)}
                         cy={yFor(point[serie.key])}
                         r="3.5"
-                        fill="white"
-                        stroke={serie.color}
+                        className="fill-white"
+                        style={{ stroke: serie.color }}
                         strokeWidth="2"
                       />
                       <circle
@@ -187,7 +187,7 @@ export function TimelineChart({ data, visibleTypes }: Props) {
                 key={point.mes}
                 x={xFor(index)}
                 y={HEIGHT - 8}
-                fill="#737373"
+                className="fill-gray-500"
                 fontSize="10"
                 fontFamily="monospace"
                 textAnchor="middle"

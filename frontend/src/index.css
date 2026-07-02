@@ -25,6 +25,64 @@
   --color-accent-soft: #f4f4f7;
 }
 
+/*
+ * Tema escuro: remapeia a MESMA paleta monocromática. Como o Tailwind v4 gera
+ * as utilities a partir de var(--color-*), inverter a rampa aqui faz toda a UI
+ * baseada em classes (fundos, textos, bordas, botões, tabelas) alternar sozinha.
+ * Regra sem @layer para ter prioridade sobre as variáveis do @theme.
+ */
+.dark {
+  --color-white: oklch(0.185 0 0);
+  --color-black: oklch(0.985 0 0);
+
+  --color-gray-50: oklch(0.225 0 0);
+  --color-gray-100: oklch(0.265 0 0);
+  --color-gray-200: oklch(0.315 0 0);
+  --color-gray-300: oklch(0.38 0 0);
+  --color-gray-400: oklch(0.5 0 0);
+  --color-gray-500: oklch(0.62 0 0);
+  --color-gray-600: oklch(0.7 0 0);
+  --color-gray-700: oklch(0.8 0 0);
+  --color-gray-800: oklch(0.88 0 0);
+  --color-gray-900: oklch(0.95 0 0);
+
+  --color-accent: #c4c4f0;
+  --color-accent-dark: #d8d8f6;
+  --color-accent-soft: oklch(0.24 0 0);
+}
+
+/* AG Grid (tema quartz) no escuro — usa a paleta já remapeada acima */
+.dark .ag-theme-quartz {
+  --ag-background-color: var(--color-white);
+  --ag-foreground-color: var(--color-black);
+  --ag-border-color: var(--color-gray-200);
+  --ag-header-background-color: var(--color-gray-50);
+  --ag-header-foreground-color: var(--color-gray-600);
+  --ag-odd-row-background-color: var(--color-gray-50);
+  --ag-row-hover-color: var(--color-gray-100);
+  --ag-control-panel-background-color: var(--color-white);
+  --ag-input-background-color: var(--color-white);
+  --ag-input-border-color: var(--color-gray-200);
+}
+
+/*
+ * Texto de dados e inputs do grid no escuro. O AG Grid não segue o
+ * --ag-foreground-color aqui, então forçamos via a paleta remapeada
+ * (var(--color-black) = claro no escuro).
+ */
+.dark .ecommerce-grid .ag-cell,
+.dark .ecommerce-grid .ag-input-field-input {
+  color: var(--color-black);
+}
+.dark .ecommerce-grid .ag-input-field-input::placeholder {
+  color: var(--color-gray-500);
+}
+
+/* Logo monocromática: inverte para ficar visível no fundo escuro */
+.dark .brand-logo {
+  filter: invert(1);
+}
+
 html, body, #root {
   height: 100%;
 }

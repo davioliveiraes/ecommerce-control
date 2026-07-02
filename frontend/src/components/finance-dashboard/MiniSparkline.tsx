@@ -26,7 +26,7 @@ export function MiniSparkline({
   serie,
   labels,
   formato,
-  color = '#0a0a0a',
+  color = 'var(--color-black)',
   height = 60,
 }: Props) {
   const [hover, setHover] = useState<Hover | null>(null)
@@ -78,11 +78,11 @@ export function MiniSparkline({
         className="block w-full"
         style={{ height }}
       >
-        <path d={areaPath} fill={color} opacity={0.06} />
+        <path d={areaPath} style={{ fill: color }} opacity={0.06} />
         <path
           d={linePath}
           fill="none"
-          stroke={color}
+          style={{ stroke: color }}
           strokeWidth={1.5}
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -93,7 +93,7 @@ export function MiniSparkline({
           const cy = yFor(v)
           return (
             <g key={i}>
-              <circle cx={cx} cy={cy} r={1.6} fill={color} />
+              <circle cx={cx} cy={cy} r={1.6} style={{ fill: color }} />
               <circle
                 cx={cx}
                 cy={cy}

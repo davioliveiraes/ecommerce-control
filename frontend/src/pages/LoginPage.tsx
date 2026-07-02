@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 
+import { ThemeToggle } from '../components/ThemeToggle'
 import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
@@ -39,9 +40,15 @@ export function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white flex">
+    <main className="relative min-h-screen bg-white flex">
+      <ThemeToggle className="absolute top-6 right-6 z-10" />
+
       <section className="hidden lg:flex w-[42%] border-r border-gray-200 bg-gray-50 px-12 py-10 flex-col justify-between">
-        <img src="/brand/logo.svg" alt="{{COMPANY_NAME}}" className="h-10 w-fit" />
+        <img
+          src="/brand/logo.svg"
+          alt="{{COMPANY_NAME}}"
+          className="brand-logo h-10 w-fit"
+        />
         <div>
           <div className="kicker mb-4">v1.0.0</div>
           <h1 className="font-display text-4xl font-semibold text-black tracking-tight leading-tight max-w-md">

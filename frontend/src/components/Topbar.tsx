@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { ThemeToggle } from './ThemeToggle'
 
 const NAV = [
   { to: '/', label: 'Início' },
@@ -15,7 +16,11 @@ export function Topbar() {
     <header className="border-b border-gray-200 bg-white/85 backdrop-blur sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
         <Link to="/" aria-label="Ir para a página inicial" className="flex items-center">
-          <img src="/brand/logo.svg" alt="{{COMPANY_NAME}}" className="h-9 w-auto" />
+          <img
+            src="/brand/logo.svg"
+            alt="{{COMPANY_NAME}}"
+            className="brand-logo h-9 w-auto"
+          />
         </Link>
 
         <div className="flex items-center gap-5">
@@ -43,6 +48,8 @@ export function Topbar() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3 border-l border-gray-200 pl-5">
+            <ThemeToggle />
+
             <div className="text-right">
               <div className="font-mono text-xs text-gray-600">sessão</div>
               <div className="text-sm text-black max-w-32 truncate">

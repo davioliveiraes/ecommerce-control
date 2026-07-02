@@ -17,12 +17,12 @@ interface Slice {
 }
 
 const FALLBACK_COLORS = [
-  '#0a0a0a',
-  '#404040',
-  '#737373',
-  '#a3a3a3',
-  '#525252',
-  '#262626',
+  'var(--color-black)',
+  'var(--color-gray-700)',
+  'var(--color-gray-500)',
+  'var(--color-gray-400)',
+  'var(--color-gray-600)',
+  'var(--color-gray-800)',
 ]
 
 export function CategoryPieChart({
@@ -83,7 +83,7 @@ function CategoryDonut({
         aria-label="Distribuição financeira por categoria"
         className="w-full"
       >
-        <circle cx="110" cy="110" r="76" fill="#fafafa" />
+        <circle cx="110" cy="110" r="76" className="fill-gray-50" />
         {slices.map((slice, index) => {
           const dashArray = `${(slice.total / totalMovimentado) * 100} ${
             100 - (slice.total / totalMovimentado) * 100
@@ -104,18 +104,23 @@ function CategoryDonut({
               cy="110"
               r="76"
               fill="transparent"
-              stroke={slice.color}
               strokeWidth="34"
               strokeDasharray={dashArray}
               strokeDashoffset={offset}
               pathLength="100"
-              style={{ cursor: 'pointer' }}
+              style={{ cursor: 'pointer', stroke: slice.color }}
               onMouseEnter={() => setHover({ slice, percentual })}
               onMouseLeave={() => setHover(null)}
             />
           )
         })}
-        <circle cx="110" cy="110" r="48" fill="white" pointerEvents="none" />
+        <circle
+          cx="110"
+          cy="110"
+          r="48"
+          className="fill-white"
+          pointerEvents="none"
+        />
         <text
           x="110"
           y="105"

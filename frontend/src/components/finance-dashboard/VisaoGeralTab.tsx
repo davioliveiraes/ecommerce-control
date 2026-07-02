@@ -265,7 +265,7 @@ export function VisaoGeralTab({
               formato="inteiro"
               serie={cronologico.map((p) => p.visitas)}
               labels={labels}
-              color="#0a0a0a"
+              color="var(--color-black)"
             />
             <KpiSparkCard
               label="Vendas"
@@ -274,7 +274,7 @@ export function VisaoGeralTab({
               formato="inteiro"
               serie={cronologico.map((p) => p.vendas)}
               labels={labels}
-              color="#404040"
+              color="var(--color-gray-700)"
             />
             <KpiSparkCard
               label="Receita"
@@ -283,7 +283,7 @@ export function VisaoGeralTab({
               formato="moeda"
               serie={cronologico.map((p) => parseFloat(p.receita) || 0)}
               labels={labels}
-              color="#262626"
+              color="var(--color-gray-800)"
             />
             <KpiSparkCard
               label="Ticket médio"
@@ -292,7 +292,7 @@ export function VisaoGeralTab({
               formato="moeda"
               serie={cronologico.map((p) => parseFloat(p.ticket_medio) || 0)}
               labels={labels}
-              color="#737373"
+              color="var(--color-gray-500)"
             />
           </div>
 
@@ -581,7 +581,14 @@ function IconPlus() {
 }
 
 function shadeFor(index: number, total: number) {
-  const shades = ['#0a0a0a', '#262626', '#404040', '#525252', '#737373', '#a3a3a3']
+  const shades = [
+    'var(--color-black)',
+    'var(--color-gray-800)',
+    'var(--color-gray-700)',
+    'var(--color-gray-600)',
+    'var(--color-gray-500)',
+    'var(--color-gray-400)',
+  ]
   if (total <= shades.length) return shades[index] || shades[shades.length - 1]
   return shades[index % shades.length]
 }

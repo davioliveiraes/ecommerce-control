@@ -11,7 +11,7 @@ export function ConstructionState({ title, description }: Props) {
         className="absolute inset-0 opacity-[0.05]"
         style={{
           backgroundImage:
-            'repeating-linear-gradient(135deg, #0A0A0A 0, #0A0A0A 1px, transparent 1px, transparent 14px)',
+            'repeating-linear-gradient(135deg, var(--color-black) 0, var(--color-black) 1px, transparent 1px, transparent 14px)',
         }}
       />
       <div className="relative max-w-xl">
