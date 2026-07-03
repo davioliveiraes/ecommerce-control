@@ -10,10 +10,10 @@ from config.testing import create_authenticated_client
 class DashboardAPITestCase(TestCase):
     def setUp(self):
         self.client, self.user = create_authenticated_client()
-        self.cat_frete = CategoriaFinanceira.objects.create(
+        self.cat_frete = CategoriaFinanceira.objects.create(empresa=self.user.empresa, 
             nome="Frete", slug="frete"
         )
-        self.cat_mkt = CategoriaFinanceira.objects.create(
+        self.cat_mkt = CategoriaFinanceira.objects.create(empresa=self.user.empresa, 
             nome="Marketing", slug="mkt"
         )
         self.cat_vendas, _ = CategoriaFinanceira.objects.get_or_create(
@@ -22,7 +22,7 @@ class DashboardAPITestCase(TestCase):
         )
 
         # Maio: 100 receita, 30 custo, 20 despesa = lucro 50
-        LancamentoFinanceiro.objects.create(
+        LancamentoFinanceiro.objects.create(empresa=self.user.empresa, 
             descricao="Venda 1", tipo="RECEITA", valor=Decimal("100"),
             categoria=self.cat_vendas,
             data_lancamento=date(2026, 5, 1), status="PAGO",
@@ -30,18 +30,18 @@ class DashboardAPITestCase(TestCase):
             quantidade_parcelas=1, quantidade_vendas=2,
             fonte_trafego="Instagram",
         )
-        LancamentoFinanceiro.objects.create(
+        LancamentoFinanceiro.objects.create(empresa=self.user.empresa, 
             descricao="Estoque", tipo="CUSTO", categoria=self.cat_frete,
             valor=Decimal("30"),
             data_lancamento=date(2026, 5, 5), status="PAGO",
         )
-        LancamentoFinanceiro.objects.create(
+        LancamentoFinanceiro.objects.create(empresa=self.user.empresa, 
             descricao="Ads", tipo="DESPESA", categoria=self.cat_mkt,
             valor=Decimal("20"),
             data_lancamento=date(2026, 5, 10), status="PAGO",
         )
         # Pendente — não conta por padrão
-        LancamentoFinanceiro.objects.create(
+        LancamentoFinanceiro.objects.create(empresa=self.user.empresa, 
             descricao="Futuro", tipo="DESPESA", valor=Decimal("999"),
             data_lancamento=date(2026, 5, 20), status="PENDENTE",
         )
@@ -80,7 +80,7 @@ class DashboardAPITestCase(TestCase):
 
         receitas = data["receitas_por_categoria"]
         self.assertEqual(len(receitas), 1)
-        self.assertEqual(receitas[0]["categoria_nome"], "NuvemShop(NuvemPago)")
+        self.assertEqual(receitas[0]["categoria_nome"], "Vendas NuvemShop")
         self.assertEqual(Decimal(receitas[0]["valor"]), Decimal("100"))
 
     def test_metricas_pagamento(self):
@@ -122,5 +122,5 @@ class DashboardAPITestCase(TestCase):
         self.assertEqual(data["despesas_por_categoria"], [])
         self.assertEqual(
             data["receitas_por_categoria"][0]["categoria_nome"],
-            "NuvemShop(NuvemPago)",
+            "Vendas NuvemShop",
         )

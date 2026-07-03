@@ -34,8 +34,18 @@ class SignedBearerAuth(HttpBearer):
 auth = SignedBearerAuth()
 
 
-def authenticate_user(username: str, password: str):
-    user = authenticate(username=username, password=password)
+def authenticate_user(identifier: str, password: str):
+    """Autentica por username ou e-mail (o campo de login aceita os dois)."""
+    identifier = identifier.strip()
+    user = authenticate(username=identifier, password=password)
+    if user is None and "@" in identifier:
+        match = (
+            get_user_model()
+            .objects.filter(email__iexact=identifier, is_active=True)
+            .first()
+        )
+        if match is not None:
+            user = authenticate(username=match.username, password=password)
     if user is None or not user.is_active:
         return None
     return user

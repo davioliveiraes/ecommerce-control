@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "ninja",
     # Local apps
+    "accounts",
     "catalog",
     "finance",
     "reports",

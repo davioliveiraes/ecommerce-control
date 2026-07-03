@@ -10,6 +10,7 @@ import { FinanceiroFiltros } from '../components/finance-dashboard/FinanceiroFil
 import { KpiCards } from '../components/finance-dashboard/KpiCards'
 import { TimelineChart } from '../components/finance-dashboard/TimelineChart'
 import { VisaoGeralTab } from '../components/finance-dashboard/VisaoGeralTab'
+import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useDownloadPdf } from '../hooks/useDownloadPdf'
 import {
@@ -28,7 +29,10 @@ const TABS: Array<{ key: TabKey; label: string }> = [
 ]
 
 export function FinancePage() {
-  useDocumentTitle('Finance — {{COMPANY_NAME}}')
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
+
+  useDocumentTitle(nomeEmpresa ? `Finance — ${nomeEmpresa}` : 'Finance')
 
   const [activeTab, setActiveTab] = useState<TabKey>('visao_geral')
 
@@ -169,12 +173,15 @@ interface FinancePageHeaderProps {
 }
 
 function FinancePageHeader({ onExport, isExporting }: FinancePageHeaderProps) {
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
+
   return (
     <div className="flex items-start justify-between gap-6">
       <div className="min-w-0">
         <div className="kicker mb-1.5">Módulo 02</div>
         <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
-          Dashboard — {`{{COMPANY_NAME}}`} Finance
+          Dashboard — {nomeEmpresa} Finance
         </h1>
         <p className="text-sm text-gray-600 mt-1 max-w-3xl">
           Visão geral da loja (preenchida pelo analista) e resultado consolidado

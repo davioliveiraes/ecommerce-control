@@ -3,6 +3,7 @@ from typing import List, Optional
 from django.http import HttpResponse
 from ninja import Query, Router
 
+from accounts.tenancy import empresa_do_usuario
 from reports.services.catalog_report import gerar_relatorio_catalogo
 
 router = Router(tags=["reports:catalog"])
@@ -19,6 +20,7 @@ def relatorio_catalogo_pdf(
     apenas_promocional: bool = False,
 ):
     pdf_bytes = gerar_relatorio_catalogo(
+        empresa=empresa_do_usuario(request),
         colunas=colunas,
         incluir_inativos=incluir_inativos,
         marca_id=marca_id,

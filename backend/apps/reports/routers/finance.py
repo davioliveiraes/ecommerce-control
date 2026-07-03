@@ -4,6 +4,7 @@ from typing import List, Optional
 from django.http import HttpResponse
 from ninja import Query, Router
 
+from accounts.tenancy import empresa_do_usuario
 from reports.services.finance_report import gerar_relatorio_finance
 from reports.services.finance_dashboard_report import gerar_relatorio_finance_dashboard
 
@@ -18,6 +19,7 @@ def relatorio_finance_dashboard_pdf(
     categoria_id: Optional[int] = None,
 ):
     pdf_bytes = gerar_relatorio_finance_dashboard(
+        empresa=empresa_do_usuario(request),
         data_inicio=data_inicio,
         data_fim=data_fim,
         categoria_id=categoria_id,
@@ -40,6 +42,7 @@ def relatorio_finance_pdf(
     busca: str = "",
 ):
     pdf_bytes = gerar_relatorio_finance(
+        empresa=empresa_do_usuario(request),
         colunas=colunas,
         incluir_inativos=incluir_inativos,
         tipo=tipo,

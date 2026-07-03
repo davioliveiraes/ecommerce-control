@@ -9,9 +9,9 @@ from config.testing import create_authenticated_client
 class ProdutoAPITestCase(TestCase):
     def setUp(self):
         self.client, self.user = create_authenticated_client()
-        self.marca = Marca.objects.create(nome="GET", slug="get")
-        self.categoria = Categoria.objects.create(nome="Fones", slug="fones")
-        self.subcategoria = Subcategoria.objects.create(
+        self.marca = Marca.objects.create(empresa=self.user.empresa, nome="GET", slug="get")
+        self.categoria = Categoria.objects.create(empresa=self.user.empresa, nome="Fones", slug="fones")
+        self.subcategoria = Subcategoria.objects.create(empresa=self.user.empresa, 
             nome="TWS", slug="tws", categoria=self.categoria,
         )
 
@@ -35,7 +35,7 @@ class ProdutoAPITestCase(TestCase):
         self.assertEqual(data["subcategoria_nome"], "TWS")
 
     def test_get_produto(self):
-        produto = Produto.objects.create(
+        produto = Produto.objects.create(empresa=self.user.empresa, 
             nome_gestaoclick="X", nome_site="Y", marca=self.marca,
         )
         response = self.client.get(f"/catalog/produtos/{produto.id}")
@@ -43,7 +43,7 @@ class ProdutoAPITestCase(TestCase):
         self.assertEqual(response.json()["nome_site"], "Y")
 
     def test_patch_produto(self):
-        produto = Produto.objects.create(nome_gestaoclick="X", nome_site="Y")
+        produto = Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="X", nome_site="Y")
         response = self.client.patch(
             f"/catalog/produtos/{produto.id}",
             json={"nome_site": "Z"},
@@ -52,15 +52,15 @@ class ProdutoAPITestCase(TestCase):
         self.assertEqual(response.json()["nome_site"], "Z")
 
     def test_archive_produto(self):
-        produto = Produto.objects.create(nome_gestaoclick="X", nome_site="Y")
+        produto = Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="X", nome_site="Y")
         response = self.client.post(f"/catalog/produtos/{produto.id}/archive")
         self.assertEqual(response.status_code, 200)
         produto.refresh_from_db()
         self.assertFalse(produto.ativo)
 
     def test_list_nao_inclui_inativos_por_padrao(self):
-        Produto.objects.create(nome_gestaoclick="A", nome_site="ATIVO")
-        inativo = Produto.objects.create(nome_gestaoclick="I", nome_site="INATIVO")
+        Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="A", nome_site="ATIVO")
+        inativo = Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="I", nome_site="INATIVO")
         inativo.ativo = False
         inativo.save()
 
@@ -70,8 +70,8 @@ class ProdutoAPITestCase(TestCase):
         self.assertNotIn("INATIVO", nomes)
 
     def test_list_inclui_inativos_com_flag(self):
-        Produto.objects.create(nome_gestaoclick="A", nome_site="ATIVO")
-        inativo = Produto.objects.create(nome_gestaoclick="I", nome_site="INATIVO")
+        Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="A", nome_site="ATIVO")
+        inativo = Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="I", nome_site="INATIVO")
         inativo.ativo = False
         inativo.save()
 
@@ -80,8 +80,8 @@ class ProdutoAPITestCase(TestCase):
         self.assertEqual(len(nomes), 2)
 
     def test_busca_por_nome(self):
-        Produto.objects.create(nome_gestaoclick="X", nome_site="FONE BLUETOOTH")
-        Produto.objects.create(nome_gestaoclick="X", nome_site="CABO USB-C")
+        Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="X", nome_site="FONE BLUETOOTH")
+        Produto.objects.create(empresa=self.user.empresa, nome_gestaoclick="X", nome_site="CABO USB-C")
         response = self.client.get("/catalog/produtos/?q=fone")
         nomes = [p["nome_site"] for p in response.json()]
         self.assertEqual(nomes, ["FONE BLUETOOTH"])

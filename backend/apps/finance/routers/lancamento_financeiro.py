@@ -4,8 +4,11 @@ from typing import List, Optional
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ninja import Router
+from ninja.errors import HttpError
 
-from finance.models import LancamentoFinanceiro
+from accounts.models import Empresa
+from accounts.tenancy import empresa_do_usuario
+from finance.models import CategoriaFinanceira, LancamentoFinanceiro
 from finance.schemas import (
     LancamentoFinanceiroIn,
     LancamentoFinanceiroOut,
@@ -13,6 +16,13 @@ from finance.schemas import (
 )
 
 router = Router(tags=["finance:lancamentos"])
+
+
+def _validar_categoria(empresa: Empresa, categoria_id: Optional[int]) -> None:
+    if categoria_id is not None and not CategoriaFinanceira.objects.filter(
+        id=categoria_id, empresa=empresa
+    ).exists():
+        raise HttpError(400, "Categoria não encontrada para esta empresa.")
 
 
 @router.get("/", response=List[LancamentoFinanceiroOut])
@@ -26,7 +36,9 @@ def list_lancamentos(
     data_fim: Optional[date] = None,
     q: str = "",
 ):
-    qs = LancamentoFinanceiro.objects.select_related("categoria")
+    qs = LancamentoFinanceiro.objects.select_related("categoria").filter(
+        empresa=empresa_do_usuario(request)
+    )
     if not inativos:
         qs = qs.filter(ativo=True)
     if tipo:
@@ -49,12 +61,16 @@ def get_lancamento(request, lancamento_id: int):
     return get_object_or_404(
         LancamentoFinanceiro.objects.select_related("categoria"),
         id=lancamento_id,
+        empresa=empresa_do_usuario(request),
     )
 
 
 @router.post("/", response={201: LancamentoFinanceiroOut})
 def create_lancamento(request, payload: LancamentoFinanceiroIn):
-    lancamento = LancamentoFinanceiro.objects.create(**payload.dict())
+    empresa = empresa_do_usuario(request)
+    data = payload.dict()
+    _validar_categoria(empresa, data.get("categoria_id"))
+    lancamento = LancamentoFinanceiro.objects.create(empresa=empresa, **data)
     return 201, lancamento
 
 
@@ -62,8 +78,13 @@ def create_lancamento(request, payload: LancamentoFinanceiroIn):
 def update_lancamento(
     request, lancamento_id: int, payload: LancamentoFinanceiroIn
 ):
-    lancamento = get_object_or_404(LancamentoFinanceiro, id=lancamento_id)
-    for field, value in payload.dict().items():
+    empresa = empresa_do_usuario(request)
+    lancamento = get_object_or_404(
+        LancamentoFinanceiro, id=lancamento_id, empresa=empresa
+    )
+    data = payload.dict()
+    _validar_categoria(empresa, data.get("categoria_id"))
+    for field, value in data.items():
         setattr(lancamento, field, value)
     lancamento.save()
     return lancamento
@@ -73,8 +94,14 @@ def update_lancamento(
 def patch_lancamento(
     request, lancamento_id: int, payload: LancamentoFinanceiroPatch
 ):
-    lancamento = get_object_or_404(LancamentoFinanceiro, id=lancamento_id)
-    for field, value in payload.dict(exclude_unset=True).items():
+    empresa = empresa_do_usuario(request)
+    lancamento = get_object_or_404(
+        LancamentoFinanceiro, id=lancamento_id, empresa=empresa
+    )
+    data = payload.dict(exclude_unset=True)
+    if "categoria_id" in data:
+        _validar_categoria(empresa, data["categoria_id"])
+    for field, value in data.items():
         setattr(lancamento, field, value)
     lancamento.save()
     return lancamento
@@ -82,7 +109,11 @@ def patch_lancamento(
 
 @router.post("/{lancamento_id}/archive", response=LancamentoFinanceiroOut)
 def archive_lancamento(request, lancamento_id: int):
-    lancamento = get_object_or_404(LancamentoFinanceiro, id=lancamento_id)
+    lancamento = get_object_or_404(
+        LancamentoFinanceiro,
+        id=lancamento_id,
+        empresa=empresa_do_usuario(request),
+    )
     lancamento.ativo = False
     lancamento.save(update_fields=["ativo"])
     return lancamento
@@ -90,7 +121,11 @@ def archive_lancamento(request, lancamento_id: int):
 
 @router.post("/{lancamento_id}/marcar-pago", response=LancamentoFinanceiroOut)
 def marcar_pago(request, lancamento_id: int):
-    lancamento = get_object_or_404(LancamentoFinanceiro, id=lancamento_id)
+    lancamento = get_object_or_404(
+        LancamentoFinanceiro,
+        id=lancamento_id,
+        empresa=empresa_do_usuario(request),
+    )
     lancamento.status = "PAGO"
     lancamento.save(update_fields=["status"])
     return lancamento

@@ -15,11 +15,15 @@ import {
 import { ProdutoSection } from '../components/produto-editor/ProdutoSection'
 import { VariacaoCard } from '../components/produto-editor/VariacaoCard'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning'
 
 export function ProdutoEditorPage() {
-  useDocumentTitle('Editar produto — {{COMPANY_NAME}} Catálogo')
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
+
+  useDocumentTitle(`Editar produto — ${nomeEmpresa} Catálogo`)
 
   const { id } = useParams<{ id: string }>()
   const produtoId = Number(id)
@@ -195,7 +199,7 @@ export function ProdutoEditorPage() {
             </button>
             <div className="kicker mb-2">Módulo 01 · Edição</div>
             <h1 className="font-display text-3xl font-semibold text-black tracking-tight mb-1">
-              Editar produto — {`{{COMPANY_NAME}}`} Catálogo
+              Editar produto — {nomeEmpresa} Catálogo
             </h1>
             <p className="text-sm text-gray-600 truncate">
               {produtoQuery.data?.descricao_produto_site}

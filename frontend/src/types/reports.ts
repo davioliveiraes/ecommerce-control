@@ -30,7 +30,7 @@ export const COLUNAS_CATALOGO: ColunaRelatorio[] = [
   { chave: 'margem_percentual', label: 'Margem %', selecionadaPorPadrao: false },
   {
     chave: 'margem_promocional_percentual',
-    label: 'Margem Promo %',
+    label: 'Margem Promoção',
     selecionadaPorPadrao: false,
   },
   {

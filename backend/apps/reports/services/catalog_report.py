@@ -5,6 +5,7 @@ from typing import Optional
 
 from django.db.models import Q
 
+from accounts.models import Empresa
 from catalog.models import Marca, Subcategoria, Variacao
 
 from .pdf_base import RelatorioPDF
@@ -68,6 +69,7 @@ COLUNAS_PADRAO = ["sku", "produto_descricao_site", "variacao", "preco_site"]
 
 
 def gerar_relatorio_catalogo(
+    empresa: Empresa,
     colunas: list[str],
     incluir_inativos: bool = False,
     marca_id: Optional[int] = None,
@@ -79,7 +81,9 @@ def gerar_relatorio_catalogo(
     if not colunas_validas:
         colunas_validas = COLUNAS_PADRAO
 
-    qs = Variacao.objects.select_related("produto__marca", "produto__subcategoria")
+    qs = Variacao.objects.select_related(
+        "produto__marca", "produto__subcategoria"
+    ).filter(produto__empresa=empresa)
     if not incluir_inativos:
         qs = qs.filter(ativo=True)
     if marca_id is not None:
@@ -102,11 +106,13 @@ def gerar_relatorio_catalogo(
     if apenas_promocional:
         filtros["Promoção"] = "Apenas variações com preço promocional"
     if marca_id is not None:
-        marca = Marca.objects.filter(id=marca_id).first()
+        marca = Marca.objects.filter(id=marca_id, empresa=empresa).first()
         if marca:
             filtros["Marca"] = marca.nome
     if subcategoria_id is not None:
-        subcategoria = Subcategoria.objects.filter(id=subcategoria_id).first()
+        subcategoria = Subcategoria.objects.filter(
+            id=subcategoria_id, empresa=empresa
+        ).first()
         if subcategoria:
             filtros["Subcategoria"] = subcategoria.nome
     if busca:
@@ -152,7 +158,11 @@ def gerar_relatorio_catalogo(
         for variacao in variacoes
     )
 
-    pdf = RelatorioPDF(subtitulo="Relatório de Catálogo", orientacao="landscape")
+    pdf = RelatorioPDF(
+        subtitulo="Relatório de Catálogo",
+        orientacao="landscape",
+        empresa_nome=empresa.nome,
+    )
     pdf.adicionar_secao("Visão geral")
     pdf.adicionar_texto(
         "Este relatório apresenta a posição do catálogo no recorte "

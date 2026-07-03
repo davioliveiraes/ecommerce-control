@@ -1,4 +1,4 @@
-"""Template base para PDFs do Controle Interno — {{COMPANY_NAME}}."""
+"""Template base para PDFs do Controle Interno (cabeçalho com a empresa do usuário)."""
 
 from io import BytesIO
 from xml.sax.saxutils import escape
@@ -36,7 +36,7 @@ def cabecalho_rodape(canvas, doc):
 
     canvas.setFillColor(COR_PRIMARIA)
     canvas.setFont("Helvetica-Bold", 12)
-    canvas.drawString(2 * cm, altura - 1.5 * cm, "{{COMPANY_NAME}} — ECOMMERCE CONTROL")
+    canvas.drawString(2 * cm, altura - 1.5 * cm, doc.empresa_nome.upper())
 
     canvas.setFillColor(COR_DESTAQUE)
     canvas.setFont("Helvetica", 9)
@@ -53,7 +53,9 @@ def cabecalho_rodape(canvas, doc):
 
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(COR_TEXTO)
-    canvas.drawString(2 * cm, 1 * cm, f"Página {doc.page} · Controle Interno — {{{{COMPANY_NAME}}}}")
+    canvas.drawString(
+        2 * cm, 1 * cm, f"Página {doc.page} · Controle Interno — {doc.empresa_nome}"
+    )
 
     canvas.restoreState()
 
@@ -61,8 +63,14 @@ def cabecalho_rodape(canvas, doc):
 class RelatorioPDF:
     """Wrapper para gerar PDFs com layout consistente."""
 
-    def __init__(self, subtitulo: str, orientacao: str = "landscape"):
+    def __init__(
+        self,
+        subtitulo: str,
+        orientacao: str = "landscape",
+        empresa_nome: str = "Controle Interno",
+    ):
         self.subtitulo = subtitulo
+        self.empresa_nome = empresa_nome
         self.buffer = BytesIO()
         self.pagesize = landscape(A4) if orientacao == "landscape" else A4
         self.elementos = []
@@ -319,6 +327,7 @@ class RelatorioPDF:
             bottomMargin=2 * cm,
         )
         doc.subtitulo = self.subtitulo
+        doc.empresa_nome = self.empresa_nome
 
         frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id="normal")
         template = PageTemplate(id="ecommerce", frames=frame, onPage=cabecalho_rodape)

@@ -1,13 +1,14 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchHealth } from '../api/health'
+import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 const MODULES = [
   {
     index: '01',
     to: '/catalogo',
-    title: '{{COMPANY_NAME}} Catálogo',
+    title: 'Catálogo',
     description:
       'Base de produtos em tabela editável. Cadastro, variações, preços, margens e integração GestãoClick ↔ Nuvemshop.',
     Icon: IconGrid,
@@ -15,7 +16,7 @@ const MODULES = [
   {
     index: '02',
     to: '/finance',
-    title: '{{COMPANY_NAME}} Finance',
+    title: 'Finance',
     description:
       'Painel consolidado de custos, receitas e despesas com séries temporais e indicadores de desempenho.',
     Icon: IconChart,
@@ -23,7 +24,12 @@ const MODULES = [
 ]
 
 export function HomePage() {
-  useDocumentTitle('Controle Interno — {{COMPANY_NAME}}')
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || user?.first_name || ''
+
+  useDocumentTitle(
+    nomeEmpresa ? `Controle Interno — ${nomeEmpresa}` : 'Controle Interno',
+  )
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['health'],
@@ -36,15 +42,15 @@ export function HomePage() {
       <div className="h-full max-w-6xl mx-auto px-8 py-10 flex flex-col">
         <div className="text-center pt-2 pb-8 shrink-0">
           <div className="text-xs uppercase tracking-widest text-slate-500 mb-4">
-            Controle interno · {`{{COMPANY_NAME}}`}
+            Controle interno
           </div>
 
           <h1 className="font-display whitespace-nowrap font-semibold text-black leading-[1.02] text-[clamp(1.5rem,5vw,4rem)]">
-            Controle Interno — {`{{COMPANY_NAME}}`}
+            {nomeEmpresa || 'Controle Interno'}
           </h1>
 
           <p className="mt-4 text-lg text-gray-600">
-            Painel interno de gestão de catálogo e financeiro
+            Painel de gestão de catálogo e financeiro da sua loja
           </p>
           <div className="mx-auto mt-6 h-[2px] w-16 bg-black" />
         </div>

@@ -4,6 +4,14 @@ from .base import SoftDeleteModel, TimestampedModel
 
 
 class Produto(TimestampedModel, SoftDeleteModel):
+    empresa = models.ForeignKey(
+        "accounts.Empresa",
+        on_delete=models.CASCADE,
+        related_name="produtos",
+        null=True,
+        blank=True,
+        verbose_name="empresa",
+    )
     nome_gestaoclick = models.CharField(
         max_length=255,
         blank=True,

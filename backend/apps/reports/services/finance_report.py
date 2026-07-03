@@ -7,6 +7,7 @@ from typing import Optional
 
 from django.db.models import Q
 
+from accounts.models import Empresa
 from finance.models import CategoriaFinanceira, LancamentoFinanceiro
 
 from .pdf_base import RelatorioPDF
@@ -45,6 +46,7 @@ COLUNAS_PADRAO = ["data", "descricao", "tipo", "categoria", "valor", "status"]
 
 
 def gerar_relatorio_finance(
+    empresa: Empresa,
     colunas: list[str],
     incluir_inativos: bool = False,
     tipo: Optional[str] = None,
@@ -58,7 +60,9 @@ def gerar_relatorio_finance(
     if not colunas_validas:
         colunas_validas = COLUNAS_PADRAO
 
-    qs = LancamentoFinanceiro.objects.select_related("categoria")
+    qs = LancamentoFinanceiro.objects.select_related("categoria").filter(
+        empresa=empresa
+    )
     if not incluir_inativos:
         qs = qs.filter(ativo=True)
     if tipo:
@@ -83,7 +87,9 @@ def gerar_relatorio_finance(
     if status:
         filtros["Status"] = status
     if categoria_id is not None:
-        categoria = CategoriaFinanceira.objects.filter(id=categoria_id).first()
+        categoria = CategoriaFinanceira.objects.filter(
+            id=categoria_id, empresa=empresa
+        ).first()
         if categoria:
             filtros["Categoria"] = categoria.nome
     if busca:
@@ -133,7 +139,11 @@ def gerar_relatorio_finance(
         for lancamento in lancamentos
     ]
 
-    pdf = RelatorioPDF(subtitulo="Relatório — {{COMPANY_NAME}} Finance", orientacao="landscape")
+    pdf = RelatorioPDF(
+        subtitulo="Relatório Financeiro",
+        orientacao="landscape",
+        empresa_nome=empresa.nome,
+    )
     pdf.adicionar_secao("Resumo executivo")
     pdf.adicionar_texto(
         "Este relatório consolida os lançamentos financeiros do período selecionado "

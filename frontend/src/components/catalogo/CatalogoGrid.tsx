@@ -28,7 +28,6 @@ export function CatalogoGrid() {
   const [searchText, setSearchText] = useState('')
   const [mostrarArquivados, setMostrarArquivados] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
-  const [apenasPromocional, setApenasPromocional] = useState(false)
   const { download, isDownloading } = useDownloadPdf()
 
   const {
@@ -233,25 +232,12 @@ export function CatalogoGrid() {
       {
         colunas,
         incluir_inativos: mostrarArquivados,
-        apenas_promocional: apenasPromocional,
         busca: searchText || undefined,
       },
       `ecommerce-catalogo-${new Date().toISOString().slice(0, 10)}.pdf`,
     )
     setIsExportOpen(false)
   }
-
-  const filtrosExtrasModal = (
-    <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
-      <input
-        type="checkbox"
-        checked={apenasPromocional}
-        onChange={(e) => setApenasPromocional(e.target.checked)}
-        className="accent-black"
-      />
-      Apenas variações com preço promocional
-    </label>
-  )
 
   if (isError) {
     return (
@@ -336,9 +322,8 @@ export function CatalogoGrid() {
       <ExportPdfModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
-        titulo="Exportar — {{COMPANY_NAME}} Catálogo"
+        titulo="Exportar — Catálogo"
         colunasDisponiveis={COLUNAS_CATALOGO}
-        filtrosExtras={filtrosExtrasModal}
         onConfirm={handleExport}
         isDownloading={isDownloading}
       />

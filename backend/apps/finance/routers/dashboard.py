@@ -6,6 +6,7 @@ from typing import List, Optional
 from django.db.models import Max, Min, Sum
 from ninja import Router, Schema
 
+from accounts.tenancy import empresa_do_usuario
 from finance.models import LancamentoFinanceiro
 
 router = Router(tags=["finance:dashboard"])
@@ -96,7 +97,9 @@ def dashboard(
     - `?incluir_pendentes=true` soma PENDENTES também (visão accrual).
     - Filtros opcionais de data: ?data_inicio=YYYY-MM-DD&data_fim=YYYY-MM-DD.
     """
-    base_qs = LancamentoFinanceiro.objects.filter(ativo=True).select_related("categoria")
+    base_qs = LancamentoFinanceiro.objects.filter(
+        ativo=True, empresa=empresa_do_usuario(request)
+    ).select_related("categoria")
     periodo_geral_agregado = base_qs.aggregate(
         data_inicio=Min("data_lancamento"),
         data_fim=Max("data_lancamento"),

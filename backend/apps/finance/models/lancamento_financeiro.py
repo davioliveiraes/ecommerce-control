@@ -31,6 +31,14 @@ class MeioPagamento(models.TextChoices):
 
 
 class LancamentoFinanceiro(TimestampedModel, SoftDeleteModel):
+    empresa = models.ForeignKey(
+        "accounts.Empresa",
+        on_delete=models.CASCADE,
+        related_name="lancamentos_financeiros",
+        null=True,
+        blank=True,
+        verbose_name="empresa",
+    )
     descricao = models.CharField(max_length=255, verbose_name="descrição")
     tipo = models.CharField(
         max_length=10,

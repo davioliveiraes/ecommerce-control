@@ -44,11 +44,14 @@ def _mes_legivel(chave: str) -> str:
 
 
 def gerar_relatorio_finance_dashboard(
+    empresa,
     data_inicio: Optional[date] = None,
     data_fim: Optional[date] = None,
     categoria_id: Optional[int] = None,
 ) -> bytes:
-    qs = LancamentoFinanceiro.objects.filter(ativo=True, status="PAGO").select_related("categoria")
+    qs = LancamentoFinanceiro.objects.filter(
+        ativo=True, status="PAGO", empresa=empresa
+    ).select_related("categoria")
     if data_inicio is not None:
         qs = qs.filter(data_lancamento__gte=data_inicio)
     if data_fim is not None:
@@ -86,7 +89,7 @@ def gerar_relatorio_finance_dashboard(
 
     # --- Página 1: cabeçalho + KPIs ---
     r.header_band(
-        wordmark="{{COMPANY_NAME}}",
+        wordmark=empresa.nome,
         kicker="RELATÓRIO FINANCEIRO — CONTROLE INTERNO",
         title="Resultado financeiro",
         subtitle="Consolidação de receitas, custos e despesas pagos no período, "
@@ -214,7 +217,7 @@ def gerar_relatorio_finance_dashboard(
     )
 
     r.footer_note(
-        "Relatório interno · {{COMPANY_NAME}} — Loja virtual (NuvemShop)",
+        f"Relatório interno · {empresa.nome} — Loja virtual (NuvemShop)",
         f"Gerado a partir do painel “Financeiro” · {agora.strftime('%d/%m/%Y %H:%M')}",
     )
 

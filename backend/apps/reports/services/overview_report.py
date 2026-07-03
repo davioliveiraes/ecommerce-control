@@ -34,10 +34,11 @@ def _label_periodo(data_inicio: Optional[date], data_fim: Optional[date]) -> str
 
 
 def gerar_relatorio_visao_geral(
+    empresa,
     data_inicio: Optional[date] = None,
     data_fim: Optional[date] = None,
 ) -> bytes:
-    qs = VisaoGeralPeriodo.objects.filter(ativo=True)
+    qs = VisaoGeralPeriodo.objects.filter(ativo=True, empresa=empresa)
     if data_inicio is not None:
         qs = qs.filter(data_fim__gte=data_inicio)
     if data_fim is not None:
@@ -78,7 +79,7 @@ def gerar_relatorio_visao_geral(
 
     # --- Página 1: cabeçalho + KPIs ---
     r.header_band(
-        wordmark="{{COMPANY_NAME}}",
+        wordmark=empresa.nome,
         kicker="RELATÓRIO DE DESEMPENHO — LOJA VIRTUAL",
         title="Visão geral da loja",
         subtitle="Panorama do comportamento de visitantes e do funil de conversão "
@@ -248,7 +249,7 @@ def gerar_relatorio_visao_geral(
     )
 
     r.footer_note(
-        "Relatório interno · {{COMPANY_NAME}} — Loja virtual (NuvemShop)",
+        f"Relatório interno · {empresa.nome} — Loja virtual (NuvemShop)",
         f"Gerado a partir do painel “Visão geral” · {agora.strftime('%d/%m/%Y %H:%M')}",
     )
 

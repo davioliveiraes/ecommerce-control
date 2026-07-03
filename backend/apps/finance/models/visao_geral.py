@@ -14,6 +14,14 @@ class VisaoGeralPeriodo(TimestampedModel, SoftDeleteModel):
     período é um registro digitado pelo analista de ecommerce.
     """
 
+    empresa = models.ForeignKey(
+        "accounts.Empresa",
+        on_delete=models.CASCADE,
+        related_name="periodos_visao_geral",
+        null=True,
+        blank=True,
+        verbose_name="empresa",
+    )
     data_inicio = models.DateField(verbose_name="início do período")
     data_fim = models.DateField(verbose_name="fim do período")
 

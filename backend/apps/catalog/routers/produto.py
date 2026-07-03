@@ -1,11 +1,14 @@
-from typing import List
+from typing import List, Optional
 
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from ninja import Router
+from ninja.errors import HttpError
 
-from catalog.models import Produto, Variacao
+from accounts.models import Empresa
+from accounts.tenancy import empresa_do_usuario
+from catalog.models import Marca, Produto, Subcategoria, Variacao
 from catalog.schemas import (
     ProdutoIn,
     ProdutoOut,
@@ -17,15 +20,33 @@ from catalog.schemas import (
 router = Router(tags=["produtos"])
 
 
+def _validar_referencias(
+    empresa: Empresa,
+    marca_id: Optional[int],
+    subcategoria_id: Optional[int],
+) -> None:
+    """Garante que marca/subcategoria referenciadas pertencem à empresa."""
+    if marca_id is not None and not Marca.objects.filter(
+        id=marca_id, empresa=empresa
+    ).exists():
+        raise HttpError(400, "Marca não encontrada para esta empresa.")
+    if subcategoria_id is not None and not Subcategoria.objects.filter(
+        id=subcategoria_id, empresa=empresa
+    ).exists():
+        raise HttpError(400, "Subcategoria não encontrada para esta empresa.")
+
+
 @router.get("/", response=List[ProdutoOut])
 def list_produtos(request, inativos: bool = False, q: str = ""):
     """
-    Lista produtos. Sem paginação (AG Grid pagina no client).
+    Lista produtos da empresa. Sem paginação (AG Grid pagina no client).
     Filtros opcionais:
     - ?inativos=true: inclui inativos
     - ?q=texto: busca em descricao_produto_site e descricao_produto_gestaoclick
     """
-    qs = Produto.objects.select_related("marca", "subcategoria")
+    qs = Produto.objects.select_related("marca", "subcategoria").filter(
+        empresa=empresa_do_usuario(request)
+    )
     if not inativos:
         qs = qs.filter(ativo=True)
     if q:
@@ -56,6 +77,7 @@ def create_produto_com_variacoes(request, payload: ProdutoComVariacoesIn):
     - Pelo menos uma variação é obrigatória.
     - SKU duplicado entre as variações do payload: 400.
     """
+    empresa = empresa_do_usuario(request)
     if not payload.variacoes:
         return 400, {"detail": "Pelo menos uma variação é obrigatória."}
 
@@ -63,8 +85,11 @@ def create_produto_com_variacoes(request, payload: ProdutoComVariacoesIn):
     if len(skus_no_payload) != len(set(skus_no_payload)):
         return 400, {"detail": "SKU duplicado no payload."}
 
+    _validar_referencias(empresa, payload.marca_id, payload.subcategoria_id)
+
     with transaction.atomic():
         produto = Produto.objects.create(
+            empresa=empresa,
             nome_gestaoclick=payload.nome_gestaoclick,
             nome_site=payload.nome_site,
             descricao_produto_gestaoclick=payload.descricao_produto_gestaoclick,
@@ -105,19 +130,26 @@ def get_produto(request, produto_id: int):
     return get_object_or_404(
         Produto.objects.select_related("marca", "subcategoria"),
         id=produto_id,
+        empresa=empresa_do_usuario(request),
     )
 
 
 @router.post("/", response={201: ProdutoOut})
 def create_produto(request, payload: ProdutoIn):
-    produto = Produto.objects.create(**payload.dict())
+    empresa = empresa_do_usuario(request)
+    data = payload.dict()
+    _validar_referencias(empresa, data.get("marca_id"), data.get("subcategoria_id"))
+    produto = Produto.objects.create(empresa=empresa, **data)
     return 201, produto
 
 
 @router.put("/{produto_id}", response=ProdutoOut)
 def update_produto(request, produto_id: int, payload: ProdutoIn):
-    produto = get_object_or_404(Produto, id=produto_id)
-    for field, value in payload.dict().items():
+    empresa = empresa_do_usuario(request)
+    produto = get_object_or_404(Produto, id=produto_id, empresa=empresa)
+    data = payload.dict()
+    _validar_referencias(empresa, data.get("marca_id"), data.get("subcategoria_id"))
+    for field, value in data.items():
         setattr(produto, field, value)
     produto.save()
     return produto
@@ -125,8 +157,10 @@ def update_produto(request, produto_id: int, payload: ProdutoIn):
 
 @router.patch("/{produto_id}", response=ProdutoOut)
 def patch_produto(request, produto_id: int, payload: ProdutoPatch):
-    produto = get_object_or_404(Produto, id=produto_id)
+    empresa = empresa_do_usuario(request)
+    produto = get_object_or_404(Produto, id=produto_id, empresa=empresa)
     data = payload.dict(exclude_unset=True)
+    _validar_referencias(empresa, data.get("marca_id"), data.get("subcategoria_id"))
     for field, value in data.items():
         setattr(produto, field, value)
     produto.save()
@@ -136,7 +170,9 @@ def patch_produto(request, produto_id: int, payload: ProdutoPatch):
 @router.post("/{produto_id}/archive", response=ProdutoOut)
 def archive_produto(request, produto_id: int):
     """Soft delete: marca como inativo."""
-    produto = get_object_or_404(Produto, id=produto_id)
+    produto = get_object_or_404(
+        Produto, id=produto_id, empresa=empresa_do_usuario(request)
+    )
     produto.ativo = False
     produto.save(update_fields=["ativo"])
     return produto
@@ -145,7 +181,9 @@ def archive_produto(request, produto_id: int):
 @router.post("/{produto_id}/restore", response=ProdutoOut)
 def restore_produto(request, produto_id: int):
     """Reativa produto arquivado."""
-    produto = get_object_or_404(Produto, id=produto_id)
+    produto = get_object_or_404(
+        Produto, id=produto_id, empresa=empresa_do_usuario(request)
+    )
     produto.ativo = True
     produto.save(update_fields=["ativo"])
     return produto
@@ -174,11 +212,14 @@ def update_produto_com_variacoes(
     - SKU duplicado em variações do mesmo payload: 400
     - id de variação não pertencente ao produto: 400
     """
-    produto = get_object_or_404(Produto, id=produto_id)
+    empresa = empresa_do_usuario(request)
+    produto = get_object_or_404(Produto, id=produto_id, empresa=empresa)
 
     skus_no_payload = [v.sku_nuvemshop for v in payload.variacoes if v.sku_nuvemshop]
     if len(skus_no_payload) != len(set(skus_no_payload)):
         return 400, {"detail": "SKU duplicado no payload."}
+
+    _validar_referencias(empresa, payload.marca_id, payload.subcategoria_id)
 
     ids_no_payload = {v.id for v in payload.variacoes if v.id is not None}
     if ids_no_payload:

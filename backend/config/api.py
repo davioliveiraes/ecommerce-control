@@ -22,9 +22,9 @@ from reports.routers import (
 )
 
 api = NinjaAPI(
-    title="Controle Interno — {{COMPANY_NAME}} API",
+    title="Controle Interno API",
     version="1.0.0",
-    description="API interna para gerenciamento de catálogo e finanças.",
+    description="API multi-tenant de gerenciamento de catálogo e finanças por empresa.",
 )
 
 

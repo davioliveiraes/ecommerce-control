@@ -4,6 +4,7 @@ from typing import Optional
 from django.http import HttpResponse
 from ninja import Router
 
+from accounts.tenancy import empresa_do_usuario
 from reports.services.overview_report import gerar_relatorio_visao_geral
 
 router = Router(tags=["reports:visao-geral"])
@@ -16,6 +17,7 @@ def relatorio_visao_geral_pdf(
     data_fim: Optional[date] = None,
 ):
     pdf_bytes = gerar_relatorio_visao_geral(
+        empresa=empresa_do_usuario(request),
         data_inicio=data_inicio,
         data_fim=data_fim,
     )

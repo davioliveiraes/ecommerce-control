@@ -9,7 +9,7 @@ from config.testing import create_authenticated_client
 class ProdutoComVariacoesTestCase(TestCase):
     def setUp(self):
         self.client, self.user = create_authenticated_client()
-        self.produto = Produto.objects.create(
+        self.produto = Produto.objects.create(empresa=self.user.empresa, 
             descricao_produto_site="FONE TESTE",
             descricao_produto_gestaoclick="FONE TESTE GC",
         )
@@ -118,7 +118,7 @@ class ProdutoComVariacoesTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_rejeita_id_de_variacao_de_outro_produto(self):
-        outro_produto = Produto.objects.create(descricao_produto_site="OUTRO")
+        outro_produto = Produto.objects.create(empresa=self.user.empresa, descricao_produto_site="OUTRO")
         outra_variacao = Variacao.objects.create(
             produto=outro_produto, sku_nuvemshop="X",
             custo=Decimal("1"), preco_loja=Decimal("2"),

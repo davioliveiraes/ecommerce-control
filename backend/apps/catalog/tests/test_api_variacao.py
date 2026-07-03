@@ -9,7 +9,7 @@ from config.testing import create_authenticated_client
 class VariacaoAPITestCase(TestCase):
     def setUp(self):
         self.client, self.user = create_authenticated_client()
-        self.produto = Produto.objects.create(
+        self.produto = Produto.objects.create(empresa=self.user.empresa, 
             nome_gestaoclick="FONE",
             nome_site="FONE DE OUVIDO",
             descricao_produto_gestaoclick="Fone com microfone embutido",
@@ -81,7 +81,7 @@ class VariacaoAPITestCase(TestCase):
         self.assertFalse(v.ativo)
 
     def test_filtro_por_produto(self):
-        outro_produto = Produto.objects.create(
+        outro_produto = Produto.objects.create(empresa=self.user.empresa, 
             nome_gestaoclick="OUTRO", nome_site="OUTRO SITE",
         )
         Variacao.objects.create(

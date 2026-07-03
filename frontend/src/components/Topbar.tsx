@@ -15,12 +15,19 @@ export function Topbar() {
   return (
     <header className="border-b border-gray-200 bg-white/85 backdrop-blur sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-8 h-16 flex items-center justify-between">
-        <Link to="/" aria-label="Ir para a página inicial" className="flex items-center">
-          <img
-            src="/brand/logo.svg"
-            alt="{{COMPANY_NAME}}"
-            className="brand-logo h-9 w-auto"
-          />
+        <Link
+          to="/"
+          aria-label="Ir para a página inicial"
+          className="flex items-baseline gap-2.5"
+        >
+          <span className="font-display text-lg font-semibold text-black tracking-tight">
+            Controle Interno
+          </span>
+          {user?.empresa && (
+            <span className="hidden sm:inline font-mono text-xs uppercase tracking-wider text-gray-500">
+              {user.empresa.nome}
+            </span>
+          )}
         </Link>
 
         <div className="flex items-center gap-5">
@@ -52,8 +59,8 @@ export function Topbar() {
 
             <div className="text-right">
               <div className="font-mono text-xs text-gray-600">sessão</div>
-              <div className="text-sm text-black max-w-32 truncate">
-                {user?.first_name || user?.username}
+              <div className="text-sm text-black max-w-40 truncate">
+                {user?.empresa?.nome || user?.first_name || user?.username}
               </div>
             </div>
             <button

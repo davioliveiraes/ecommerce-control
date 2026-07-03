@@ -16,7 +16,7 @@ export function ConfirmDialog({
   isOpen,
   title,
   description,
-  kicker = 'Controle Interno — {{COMPANY_NAME}}',
+  kicker = 'Controle Interno',
   confirmLabel,
   cancelLabel = 'Voltar',
   isPending = false,
@@ -34,9 +34,10 @@ export function ConfirmDialog({
 
   if (!isOpen) return null
 
+  // Overlay em preto literal: bg-black remapeia para claro no tema dark
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#000]/45 p-4"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !isPending) onCancel()
       }}

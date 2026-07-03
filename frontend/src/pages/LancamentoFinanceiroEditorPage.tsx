@@ -15,6 +15,7 @@ import {
   lancamentoFinanceiroSchema,
   type LancamentoFinanceiroForm,
 } from '../components/lancamento-editor/schema'
+import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning'
 
@@ -31,8 +32,12 @@ export function LancamentoFinanceiroEditorPage() {
   const isNew = !id
   const lancamentoId = Number(id)
   const isValidId = isNew || (lancamentoId && !isNaN(lancamentoId))
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
   useDocumentTitle(
-    isNew ? 'Novo lançamento — {{COMPANY_NAME}} Finance' : 'Editar lançamento — {{COMPANY_NAME}} Finance',
+    isNew
+      ? `Novo lançamento — ${nomeEmpresa} Finance`
+      : `Editar lançamento — ${nomeEmpresa} Finance`,
   )
 
   const lancamentoQuery = useQuery({

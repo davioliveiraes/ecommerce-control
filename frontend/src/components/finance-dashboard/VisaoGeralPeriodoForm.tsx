@@ -110,8 +110,9 @@ export function VisaoGeralPeriodoForm({
     onSubmit(values)
   })
 
+  // Overlay em preto literal: bg-black remapeia para claro no tema dark
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000]/45 p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
           <div>

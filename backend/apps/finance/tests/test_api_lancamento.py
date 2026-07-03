@@ -10,7 +10,7 @@ from config.testing import create_authenticated_client
 class LancamentoAPITestCase(TestCase):
     def setUp(self):
         self.client, self.user = create_authenticated_client()
-        self.cat = CategoriaFinanceira.objects.create(nome="Frete", slug="frete")
+        self.cat = CategoriaFinanceira.objects.create(empresa=self.user.empresa, nome="Frete", slug="frete")
 
     def test_create_lancamento(self):
         payload = {
@@ -29,11 +29,11 @@ class LancamentoAPITestCase(TestCase):
         self.assertEqual(data["status"], "PAGO")
 
     def test_filtros(self):
-        LancamentoFinanceiro.objects.create(
+        LancamentoFinanceiro.objects.create(empresa=self.user.empresa, 
             descricao="A", tipo="DESPESA", valor=Decimal("10"),
             data_lancamento=date(2026, 5, 1), status="PAGO",
         )
-        LancamentoFinanceiro.objects.create(
+        LancamentoFinanceiro.objects.create(empresa=self.user.empresa, 
             descricao="B", tipo="RECEITA", valor=Decimal("20"),
             data_lancamento=date(2026, 5, 1), status="PENDENTE",
         )
@@ -45,7 +45,7 @@ class LancamentoAPITestCase(TestCase):
         self.assertEqual(len(response.json()), 1)
 
     def test_marcar_pago(self):
-        l = LancamentoFinanceiro.objects.create(
+        l = LancamentoFinanceiro.objects.create(empresa=self.user.empresa, 
             descricao="X", tipo="DESPESA", valor=Decimal("10"),
             data_lancamento=date(2026, 5, 1),
         )

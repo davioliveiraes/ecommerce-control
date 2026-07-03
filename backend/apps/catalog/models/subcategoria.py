@@ -4,6 +4,14 @@ from .base import SoftDeleteModel, TimestampedModel
 
 
 class Subcategoria(TimestampedModel, SoftDeleteModel):
+    empresa = models.ForeignKey(
+        "accounts.Empresa",
+        on_delete=models.CASCADE,
+        related_name="subcategorias",
+        null=True,
+        blank=True,
+        verbose_name="empresa",
+    )
     nome = models.CharField(max_length=100, verbose_name="nome")
     slug = models.SlugField(max_length=120, verbose_name="slug")
     categoria = models.ForeignKey(

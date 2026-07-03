@@ -19,8 +19,8 @@ class CategoriaAPITestCase(TestCase):
         self.assertEqual(data["cor_hex"], "#f97316")
 
     def test_list_so_ativas_por_padrao(self):
-        CategoriaFinanceira.objects.create(nome="A", slug="a")
-        CategoriaFinanceira.objects.create(nome="I", slug="i", ativo=False)
+        CategoriaFinanceira.objects.create(empresa=self.user.empresa, nome="A", slug="a")
+        CategoriaFinanceira.objects.create(empresa=self.user.empresa, nome="I", slug="i", ativo=False)
 
         response = self.client.get("/finance/categorias/")
         nomes = [c["nome"] for c in response.json()]

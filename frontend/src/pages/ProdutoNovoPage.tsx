@@ -14,6 +14,7 @@ import {
 import { ProdutoSection } from '../components/produto-editor/ProdutoSection'
 import { VariacaoCard } from '../components/produto-editor/VariacaoCard'
 import { ConfirmDialog } from '../components/ConfirmDialog'
+import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useUnsavedChangesWarning } from '../hooks/useUnsavedChangesWarning'
 
@@ -32,7 +33,10 @@ const variacaoVazia = {
 }
 
 export function ProdutoNovoPage() {
-  useDocumentTitle('Adicionar produto — {{COMPANY_NAME}} Catálogo')
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
+
+  useDocumentTitle(`Adicionar produto — ${nomeEmpresa} Catálogo`)
 
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -131,7 +135,7 @@ export function ProdutoNovoPage() {
             </button>
             <div className="kicker mb-2">Módulo 01 · Novo produto</div>
             <h1 className="font-display text-3xl font-semibold text-black tracking-tight mb-1">
-              Adicionar produto — {`{{COMPANY_NAME}}`} Catálogo
+              Adicionar produto — {nomeEmpresa} Catálogo
             </h1>
             <p className="text-sm text-gray-600">
               Cadastre o produto e ao menos uma variação com custo e preços.

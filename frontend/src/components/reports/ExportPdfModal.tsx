@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { useAuth } from '../../hooks/useAuth'
 import type { ColunaRelatorio } from '../../types/reports'
 
 interface Props {
@@ -20,6 +21,8 @@ export function ExportPdfModal({
   onConfirm,
   isDownloading,
 }: Props) {
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
   const [colunasSelecionadas, setColunasSelecionadas] = useState<Set<string>>(
     new Set(
       colunasDisponiveis
@@ -48,12 +51,15 @@ export function ExportPdfModal({
     await onConfirm(Array.from(colunasSelecionadas))
   }
 
+  // Overlay em preto literal: bg-black remapeia para claro no tema dark
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#000]/45 p-4">
       <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 bg-white shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-4">
           <div>
-            <div className="kicker mb-1">Controle Interno — {`{{COMPANY_NAME}}`}</div>
+            <div className="kicker mb-1">
+              Controle Interno{nomeEmpresa ? ` — ${nomeEmpresa}` : ''}
+            </div>
             <h2 className="font-display text-xl font-semibold text-black">
               {titulo}
             </h2>

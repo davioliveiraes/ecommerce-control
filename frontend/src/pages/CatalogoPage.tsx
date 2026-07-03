@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
 
 import { CatalogoGrid } from '../components/catalogo/CatalogoGrid'
+import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 
 export function CatalogoPage() {
-  useDocumentTitle('Catálogo — {{COMPANY_NAME}}')
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
+
+  useDocumentTitle(nomeEmpresa ? `Catálogo — ${nomeEmpresa}` : 'Catálogo')
 
   return (
     <div className="max-w-[1600px] mx-auto px-8 py-6">
@@ -12,7 +16,7 @@ export function CatalogoPage() {
         <div className="min-w-0">
           <div className="kicker mb-1.5">Módulo 01</div>
           <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
-            Catálogo — {`{{COMPANY_NAME}}`}
+            Catálogo{nomeEmpresa ? ` — ${nomeEmpresa}` : ''}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Gestão dos produtos, variações, preços e integração com NuvemShop.
