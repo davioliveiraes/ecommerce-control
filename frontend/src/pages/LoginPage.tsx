@@ -1,35 +1,19 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { isAxiosError } from 'axios'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
+import { mensagemDeErro } from '../utils/apiError'
 import { formatCnpj, somenteDigitosCnpj } from '../utils/cnpj'
 
 type Mode = 'login' | 'register'
-
-function mensagemDeErro(err: unknown, fallback: string): string {
-  if (isAxiosError(err)) {
-    const detail = (err.response?.data as { detail?: unknown } | undefined)
-      ?.detail
-    if (typeof detail === 'string') return detail
-    // Erros de validação do Ninja (422): lista de {msg, ...}
-    if (Array.isArray(detail) && detail.length > 0) {
-      const primeiro = detail[0] as { msg?: string }
-      if (typeof primeiro.msg === 'string')
-        return primeiro.msg.replace(/^Value error,\s*/, '')
-    }
-  }
-  return fallback
-}
 
 export function LoginPage() {
   useDocumentTitle('Controle Interno — Login')
 
   const { isAuthenticated, isLoading, login, register } = useAuth()
   const navigate = useNavigate()
-  const location = useLocation()
 
   const [mode, setMode] = useState<Mode>('login')
   const [username, setUsername] = useState('')
@@ -42,12 +26,8 @@ export function LoginPage() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const from =
-    (location.state as { from?: { pathname?: string } } | null)?.from
-      ?.pathname || '/'
-
   if (!isLoading && isAuthenticated) {
-    return <Navigate to={from} replace />
+    return <Navigate to="/" replace />
   }
 
   const trocarModo = (novo: Mode) => {
@@ -61,7 +41,7 @@ export function LoginPage() {
     setIsSubmitting(true)
     try {
       await login({ username, password })
-      navigate(from, { replace: true })
+      navigate('/', { replace: true })
     } catch {
       setError('Usuário ou senha inválidos.')
     } finally {
@@ -121,7 +101,7 @@ export function LoginPage() {
           Controle Interno
         </div>
         <div>
-          <div className="kicker mb-4">Para lojistas com CNPJ</div>
+          <div className="kicker mb-4">Feito para lojistas</div>
           <h1 className="font-display text-4xl font-semibold text-black tracking-tight leading-tight max-w-md">
             O catálogo e o financeiro da sua loja em um só lugar.
           </h1>
@@ -232,8 +212,8 @@ export function LoginPage() {
                   Criar conta da empresa
                 </h2>
                 <p className="text-sm text-gray-600 mt-1">
-                  Destinado a empresas com CNPJ. Sua loja terá catálogo e
-                  financeiro próprios.
+                  Cadastre sua empresa e tenha catálogo e financeiro
+                  próprios para a sua loja.
                 </p>
               </div>
 

@@ -27,6 +27,18 @@ export interface RegisterPayload {
   password: string
 }
 
+export interface UpdateEmpresaPayload {
+  nome: string
+  cnpj: string
+  username: string
+  email: string
+}
+
+export interface ChangePasswordPayload {
+  senha_atual: string
+  nova_senha: string
+}
+
 export interface LoginResponse {
   token: string
   token_type: 'Bearer'

@@ -95,6 +95,43 @@ class RegisterIn(Schema):
         return value
 
 
+class EmpresaUpdateIn(Schema):
+    nome: str
+    cnpj: str
+    username: str
+    email: str
+
+    @field_validator("nome")
+    @classmethod
+    def nome_obrigatorio(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 2:
+            raise ValueError("Informe o nome da empresa.")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def email_valido(cls, value: str) -> str:
+        value = value.strip().lower()
+        try:
+            validate_email(value)
+        except ValidationError as exc:
+            raise ValueError("E-mail inválido.") from exc
+        return value
+
+
+class SenhaIn(Schema):
+    senha_atual: str
+    nova_senha: str
+
+    @field_validator("nova_senha")
+    @classmethod
+    def senha_minima(cls, value: str) -> str:
+        if len(value) < 8:
+            raise ValueError("A nova senha deve ter pelo menos 8 caracteres.")
+        return value
+
+
 class LogoutOut(Schema):
     ok: bool
 
@@ -147,6 +184,56 @@ def register(request, payload: RegisterIn):
 @router.get("/me", auth=auth, response=UserOut)
 def me(request):
     return request.auth
+
+
+@router.put("/empresa", auth=auth, response=UserOut)
+def atualizar_empresa(request, payload: EmpresaUpdateIn):
+    """Atualiza os dados da empresa e as credenciais de acesso do usuário."""
+    user = request.auth
+    empresa = Empresa.objects.filter(user=user).first()
+    if empresa is None:
+        raise HttpError(403, "Usuário sem empresa vinculada.")
+
+    cnpj = limpar_cnpj(payload.cnpj)
+    if not cnpj_valido(cnpj):
+        raise HttpError(400, "CNPJ inválido.")
+    if Empresa.objects.filter(cnpj=cnpj).exclude(pk=empresa.pk).exists():
+        raise HttpError(409, "Já existe uma empresa cadastrada com este CNPJ.")
+
+    # Manter o username atual é permitido (contas legadas usam o e-mail);
+    # um username novo precisa seguir o formato.
+    username = normalizar_username(payload.username)
+    if username != user.username and not username_valido(username):
+        raise HttpError(400, USERNAME_MENSAGEM)
+
+    outros = get_user_model().objects.exclude(pk=user.pk)
+    if outros.filter(username__iexact=username).exists():
+        raise HttpError(409, "Já existe uma conta com este usuário.")
+    if outros.filter(
+        Q(email__iexact=payload.email) | Q(username__iexact=payload.email)
+    ).exists():
+        raise HttpError(409, "Já existe uma conta com este e-mail.")
+
+    with transaction.atomic():
+        user.username = username
+        user.email = payload.email
+        user.first_name = payload.nome
+        user.save(update_fields=["username", "email", "first_name"])
+        empresa.nome = payload.nome
+        empresa.cnpj = cnpj
+        empresa.save(update_fields=["nome", "cnpj", "atualizado_em"])
+
+    return user
+
+
+@router.post("/alterar-senha", auth=auth, response=LogoutOut)
+def alterar_senha(request, payload: SenhaIn):
+    user = request.auth
+    if not user.check_password(payload.senha_atual):
+        raise HttpError(400, "Senha atual incorreta.")
+    user.set_password(payload.nova_senha)
+    user.save(update_fields=["password"])
+    return LogoutOut(ok=True)
 
 
 @router.post("/logout", auth=auth, response=LogoutOut)

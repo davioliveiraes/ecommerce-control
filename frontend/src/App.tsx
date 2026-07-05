@@ -20,6 +20,8 @@ import { FinancePage } from './pages/FinancePage'
 import { LancamentosFinanceirosPage } from './pages/LancamentosFinanceirosPage'
 import { LancamentoFinanceiroEditorPage } from './pages/LancamentoFinanceiroEditorPage'
 import { LoginPage } from './pages/LoginPage'
+import { EmpresaPage } from './pages/EmpresaPage'
+import { AlterarSenhaPage } from './pages/AlterarSenhaPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,6 +57,8 @@ const router = createBrowserRouter([
         element: <RootLayout />,
         children: [
           { path: '/', element: <HomePage /> },
+          { path: '/empresa', element: <EmpresaPage /> },
+          { path: '/alterar-senha', element: <AlterarSenhaPage /> },
           { path: '/catalogo', element: <CatalogoPage /> },
           { path: '/catalogo/produto/novo', element: <ProdutoNovoPage /> },
           { path: '/catalogo/produto/:id', element: <ProdutoEditorPage /> },

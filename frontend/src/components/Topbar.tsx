@@ -57,19 +57,49 @@ export function Topbar() {
           <div className="hidden md:flex items-center gap-3 border-l border-gray-200 pl-5">
             <ThemeToggle />
 
-            <div className="text-right">
-              <div className="font-mono text-xs text-gray-600">sessão</div>
-              <div className="text-sm text-black max-w-40 truncate">
-                {user?.empresa?.nome || user?.first_name || user?.username}
+            <div className="relative group">
+              <button
+                type="button"
+                className="text-right cursor-pointer"
+                aria-haspopup="menu"
+              >
+                <div className="font-mono text-xs text-gray-600">sessão</div>
+                <div className="text-sm text-black max-w-40 truncate group-hover:underline underline-offset-4 decoration-gray-400">
+                  {user?.empresa?.nome || user?.first_name || user?.username}
+                </div>
+              </button>
+
+              <div className="absolute right-0 top-full z-20 hidden pt-2 group-hover:block group-focus-within:block">
+                <div
+                  role="menu"
+                  className="w-48 border border-gray-200 bg-white shadow-sm py-1"
+                >
+                  <Link
+                    to="/empresa"
+                    role="menuitem"
+                    className="block px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                  >
+                    Dados da empresa
+                  </Link>
+                  <Link
+                    to="/alterar-senha"
+                    role="menuitem"
+                    className="block px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                  >
+                    Alterar senha
+                  </Link>
+                  <div className="my-1 border-t border-gray-200" />
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={() => logout()}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-600 hover:text-black hover:bg-gray-50 transition-colors"
+                  >
+                    Sair
+                  </button>
+                </div>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="px-3 py-1.5 text-xs border border-gray-200 text-gray-600 hover:text-black hover:border-gray-400 transition-colors"
-            >
-              Sair
-            </button>
           </div>
         </div>
       </div>

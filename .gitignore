@@ -81,6 +81,9 @@ frontend/.env
 Thumbs.db
 desktop.ini
 
+# WSL: Alternate Data Streams do NTFS que viram arquivos ao copiar do Windows
+*:Zone.Identifier
+
 # ============================
 # Dados sensíveis do negócio
 # ============================

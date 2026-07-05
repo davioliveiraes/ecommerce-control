@@ -77,6 +77,91 @@ class AuthAPITestCase(TestCase):
         response = self.client.post("/auth/register", json=payload)
         self.assertEqual(response.status_code, 422)
 
+    def _registrar_e_obter_token(self):
+        response = self.client.post(
+            "/auth/register",
+            json={
+                "nome": "Loja Teste",
+                "cnpj": "11222333000181",
+                "username": "lojateste",
+                "email": "contato@lojateste.com.br",
+                "password": "senha-segura-123",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        return response.json()["token"]
+
+    def test_atualizar_empresa(self):
+        token = self._registrar_e_obter_token()
+        headers = {"Authorization": f"Bearer {token}"}
+        response = self.client.put(
+            "/auth/empresa",
+            json={
+                "nome": "Loja Renomeada",
+                "cnpj": "04252011000110",
+                "username": "lojarenomeada",
+                "email": "novo@lojateste.com.br",
+            },
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["username"], "lojarenomeada")
+        self.assertEqual(data["email"], "novo@lojateste.com.br")
+        self.assertEqual(data["empresa"]["nome"], "Loja Renomeada")
+        self.assertEqual(data["empresa"]["cnpj"], "04252011000110")
+
+        # Manter o mesmo username (sem mudança) continua válido.
+        response = self.client.put(
+            "/auth/empresa",
+            json={
+                "nome": "Loja Renomeada",
+                "cnpj": "04252011000110",
+                "username": "lojarenomeada",
+                "email": "novo@lojateste.com.br",
+            },
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_atualizar_empresa_recusa_username_de_outra_conta(self):
+        token = self._registrar_e_obter_token()
+        response = self.client.put(
+            "/auth/empresa",
+            json={
+                "nome": "Loja Teste",
+                "cnpj": "11222333000181",
+                "username": "admin",
+                "email": "contato@lojateste.com.br",
+            },
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        self.assertEqual(response.status_code, 409)
+
+    def test_alterar_senha(self):
+        token = self._registrar_e_obter_token()
+        headers = {"Authorization": f"Bearer {token}"}
+
+        response = self.client.post(
+            "/auth/alterar-senha",
+            json={"senha_atual": "errada", "nova_senha": "nova-senha-123"},
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 400)
+
+        response = self.client.post(
+            "/auth/alterar-senha",
+            json={"senha_atual": "senha-segura-123", "nova_senha": "nova-senha-123"},
+            headers=headers,
+        )
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(
+            "/auth/login",
+            json={"username": "lojateste", "password": "nova-senha-123"},
+        )
+        self.assertEqual(response.status_code, 200)
+
     def test_me_exige_token(self):
         response = self.client.get("/auth/me")
         self.assertEqual(response.status_code, 401)

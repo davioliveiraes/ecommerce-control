@@ -1,9 +1,11 @@
 import { apiClient } from './client'
 import type {
   AuthUser,
+  ChangePasswordPayload,
   LoginPayload,
   LoginResponse,
   RegisterPayload,
+  UpdateEmpresaPayload,
 } from '../types/auth'
 
 export async function login(payload: LoginPayload): Promise<LoginResponse> {
@@ -23,6 +25,23 @@ export async function register(
 
 export async function fetchMe(): Promise<AuthUser> {
   const response = await apiClient.get<AuthUser>('/auth/me')
+  return response.data
+}
+
+export async function updateEmpresa(
+  payload: UpdateEmpresaPayload,
+): Promise<AuthUser> {
+  const response = await apiClient.put<AuthUser>('/auth/empresa', payload)
+  return response.data
+}
+
+export async function changePassword(
+  payload: ChangePasswordPayload,
+): Promise<{ ok: boolean }> {
+  const response = await apiClient.post<{ ok: boolean }>(
+    '/auth/alterar-senha',
+    payload,
+  )
   return response.data
 }
 

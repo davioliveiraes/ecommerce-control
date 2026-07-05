@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 import {
   fetchMe,
@@ -15,6 +16,7 @@ import { AuthContext, type AuthContextValue } from './authContextValue'
 import type { AuthUser, LoginPayload, RegisterPayload } from '../types/auth'
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -51,17 +53,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [refreshUser])
 
-  const login = useCallback(async (payload: LoginPayload) => {
-    const response = await loginRequest(payload)
-    setAuthToken(response.token)
-    setUser(response.user)
-  }, [])
+  const login = useCallback(
+    async (payload: LoginPayload) => {
+      const response = await loginRequest(payload)
+      // Garante que nada em cache de uma sessão anterior vaze para esta
+      queryClient.clear()
+      setAuthToken(response.token)
+      setUser(response.user)
+    },
+    [queryClient],
+  )
 
-  const register = useCallback(async (payload: RegisterPayload) => {
-    const response = await registerRequest(payload)
-    setAuthToken(response.token)
-    setUser(response.user)
-  }, [])
+  const register = useCallback(
+    async (payload: RegisterPayload) => {
+      const response = await registerRequest(payload)
+      queryClient.clear()
+      setAuthToken(response.token)
+      setUser(response.user)
+    },
+    [queryClient],
+  )
 
   const logout = useCallback(async () => {
     try {
@@ -71,8 +82,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       clearAuthToken()
       setUser(null)
+      // Reset da sessão: descarta dados em cache da empresa anterior
+      queryClient.clear()
     }
-  }, [])
+  }, [queryClient])
 
   const value = useMemo<AuthContextValue>(
     () => ({
