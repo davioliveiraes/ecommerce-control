@@ -20,6 +20,8 @@ import { FinancePage } from './pages/FinancePage'
 import { LancamentosFinanceirosPage } from './pages/LancamentosFinanceirosPage'
 import { LancamentoFinanceiroEditorPage } from './pages/LancamentoFinanceiroEditorPage'
 import { LoginPage } from './pages/LoginPage'
+import { EsqueciSenhaPage } from './pages/EsqueciSenhaPage'
+import { RedefinirSenhaPage } from './pages/RedefinirSenhaPage'
 import { EmpresaPage } from './pages/EmpresaPage'
 import { AlterarSenhaPage } from './pages/AlterarSenhaPage'
 
@@ -50,6 +52,8 @@ function LegacyProdutoRedirect() {
 
 const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
+  { path: '/esqueci-senha', element: <EsqueciSenhaPage /> },
+  { path: '/redefinir-senha', element: <RedefinirSenhaPage /> },
   {
     element: <ProtectedRoute />,
     children: [

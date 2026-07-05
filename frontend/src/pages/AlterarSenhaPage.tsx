@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 
 import { changePassword } from '../api/auth'
+import { PasswordInput } from '../components/PasswordInput'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { mensagemDeErro } from '../utils/apiError'
 
@@ -65,12 +66,10 @@ export function AlterarSenhaPage() {
               <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
                 Senha atual
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 value={senhaAtual}
                 onChange={(event) => setSenhaAtual(event.target.value)}
                 autoComplete="current-password"
-                className="form-input"
                 autoFocus
               />
             </div>
@@ -79,12 +78,10 @@ export function AlterarSenhaPage() {
               <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
                 Nova senha
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 value={novaSenha}
                 onChange={(event) => setNovaSenha(event.target.value)}
                 autoComplete="new-password"
-                className="form-input"
               />
             </div>
 
@@ -92,12 +89,10 @@ export function AlterarSenhaPage() {
               <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
                 Confirmar nova senha
               </label>
-              <input
-                type="password"
+              <PasswordInput
                 value={confirmarSenha}
                 onChange={(event) => setConfirmarSenha(event.target.value)}
                 autoComplete="new-password"
-                className="form-input"
               />
             </div>
           </div>

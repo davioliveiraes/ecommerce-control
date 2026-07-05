@@ -89,4 +89,15 @@ CORS_ALLOWED_ORIGINS = env.list(
 
 AUTH_TOKEN_MAX_AGE_SECONDS = env.int("AUTH_TOKEN_MAX_AGE_SECONDS", default=60 * 60 * 12)
 
+# Recuperação de senha: em dev o e-mail é impresso no console do backend;
+# em produção configurar EMAIL_BACKEND/SMTP via variáveis de ambiente.
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL", default="Controle Interno <nao-responda@localhost>"
+)
+# Base usada para montar o link de redefinição enviado por e-mail
+FRONTEND_URL = env("FRONTEND_URL", default="http://localhost:5173")
+
 TEST_RUNNER = "config.test_runner.AppsTestRunner"

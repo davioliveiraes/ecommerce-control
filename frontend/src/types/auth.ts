@@ -39,6 +39,16 @@ export interface ChangePasswordPayload {
   nova_senha: string
 }
 
+export interface ForgotPasswordPayload {
+  email: string
+}
+
+export interface ResetPasswordPayload {
+  uid: string
+  token: string
+  nova_senha: string
+}
+
 export interface LoginResponse {
   token: string
   token_type: 'Bearer'

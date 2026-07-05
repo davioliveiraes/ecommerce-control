@@ -1,4 +1,7 @@
+import re
+
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import TestCase
 from ninja.testing import TestClient
 
@@ -161,6 +164,62 @@ class AuthAPITestCase(TestCase):
             json={"username": "lojateste", "password": "nova-senha-123"},
         )
         self.assertEqual(response.status_code, 200)
+
+    def test_esqueci_senha_envia_email_com_link(self):
+        response = self.client.post(
+            "/auth/esqueci-senha", json={"email": "admin@example.com"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("/redefinir-senha?uid=", mail.outbox[0].body)
+        self.assertEqual(mail.outbox[0].to, ["admin@example.com"])
+
+    def test_esqueci_senha_nao_revela_email_desconhecido(self):
+        response = self.client.post(
+            "/auth/esqueci-senha", json={"email": "naoexiste@example.com"}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_redefinir_senha_com_link_do_email(self):
+        self.client.post("/auth/esqueci-senha", json={"email": "admin@example.com"})
+        match = re.search(
+            r"/redefinir-senha\?uid=([^&\s]+)&token=([^\s]+)", mail.outbox[0].body
+        )
+        self.assertIsNotNone(match)
+        uid, token = match.group(1), match.group(2)
+
+        response = self.client.post(
+            "/auth/redefinir-senha",
+            json={"uid": uid, "token": token, "nova_senha": "senha-nova-456"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # Senha antiga deixa de valer; a nova funciona.
+        response = self.client.post(
+            "/auth/login",
+            json={"username": "admin", "password": "senha-segura-123"},
+        )
+        self.assertEqual(response.status_code, 401)
+        response = self.client.post(
+            "/auth/login",
+            json={"username": "admin", "password": "senha-nova-456"},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        # O mesmo token não pode ser reutilizado.
+        response = self.client.post(
+            "/auth/redefinir-senha",
+            json={"uid": uid, "token": token, "nova_senha": "outra-senha-789"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_redefinir_senha_recusa_token_invalido(self):
+        response = self.client.post(
+            "/auth/redefinir-senha",
+            json={"uid": "abc", "token": "invalido", "nova_senha": "senha-nova-456"},
+        )
+        self.assertEqual(response.status_code, 400)
 
     def test_me_exige_token(self):
         response = self.client.get("/auth/me")

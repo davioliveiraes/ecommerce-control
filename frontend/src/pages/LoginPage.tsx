@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 
+import { PasswordInput } from '../components/PasswordInput'
 import { ThemeToggle } from '../components/ThemeToggle'
 import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
@@ -177,13 +178,19 @@ export function LoginPage() {
                   <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
                     Senha
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     autoComplete="current-password"
-                    className="form-input"
                   />
+                  <div className="mt-1.5 text-right">
+                    <Link
+                      to="/esqueci-senha"
+                      className="text-xs text-gray-600 hover:text-black underline underline-offset-4 decoration-gray-400 transition-colors"
+                    >
+                      Esqueceu a senha?
+                    </Link>
+                  </div>
                 </div>
               </div>
 
@@ -280,12 +287,10 @@ export function LoginPage() {
                   <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
                     Senha
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     autoComplete="new-password"
-                    className="form-input"
                   />
                 </div>
 
@@ -293,12 +298,10 @@ export function LoginPage() {
                   <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
                     Confirmar senha
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={confirmPassword}
                     onChange={(event) => setConfirmPassword(event.target.value)}
                     autoComplete="new-password"
-                    className="form-input"
                   />
                 </div>
               </div>

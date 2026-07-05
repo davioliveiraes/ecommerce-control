@@ -2,9 +2,11 @@ import { apiClient } from './client'
 import type {
   AuthUser,
   ChangePasswordPayload,
+  ForgotPasswordPayload,
   LoginPayload,
   LoginResponse,
   RegisterPayload,
+  ResetPasswordPayload,
   UpdateEmpresaPayload,
 } from '../types/auth'
 
@@ -40,6 +42,26 @@ export async function changePassword(
 ): Promise<{ ok: boolean }> {
   const response = await apiClient.post<{ ok: boolean }>(
     '/auth/alterar-senha',
+    payload,
+  )
+  return response.data
+}
+
+export async function forgotPassword(
+  payload: ForgotPasswordPayload,
+): Promise<{ ok: boolean }> {
+  const response = await apiClient.post<{ ok: boolean }>(
+    '/auth/esqueci-senha',
+    payload,
+  )
+  return response.data
+}
+
+export async function resetPassword(
+  payload: ResetPasswordPayload,
+): Promise<{ ok: boolean }> {
+  const response = await apiClient.post<{ ok: boolean }>(
+    '/auth/redefinir-senha',
     payload,
   )
   return response.data
