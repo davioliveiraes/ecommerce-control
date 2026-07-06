@@ -158,7 +158,7 @@ export function LancamentoFinanceiroEditorPage() {
               <IconArrowLeft />
               voltar aos lançamentos
             </button>
-            <div className="kicker mb-2">Módulo 02 · Finance</div>
+            <div className="kicker mb-2">Módulo 02 · Financeiro</div>
             <h1 className="font-display text-3xl font-semibold text-black tracking-tight mb-1">
               {isNew ? 'Novo lançamento' : 'Editar lançamento'}
             </h1>

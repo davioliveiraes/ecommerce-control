@@ -5,7 +5,7 @@ import { ThemeToggle } from './ThemeToggle'
 const NAV = [
   { to: '/', label: 'Início' },
   { to: '/catalogo', label: 'Catálogo' },
-  { to: '/finance', label: 'Finance' },
+  { to: '/finance', label: 'Financeiro' },
 ]
 
 export function Topbar() {
@@ -24,7 +24,10 @@ export function Topbar() {
             Controle Interno
           </span>
           {user?.empresa && (
-            <span className="hidden sm:inline font-mono text-xs uppercase tracking-wider text-gray-500">
+            <span
+              title={user.empresa.nome}
+              className="hidden sm:inline-block truncate max-w-[10rem] md:max-w-[14rem] lg:max-w-[22rem] xl:max-w-md font-mono text-xs uppercase tracking-wider text-gray-500"
+            >
               {user.empresa.nome}
             </span>
           )}
@@ -64,7 +67,12 @@ export function Topbar() {
                 aria-haspopup="menu"
               >
                 <div className="font-mono text-xs text-gray-600">sessão</div>
-                <div className="text-sm text-black max-w-40 truncate group-hover:underline underline-offset-4 decoration-gray-400">
+                <div
+                  title={
+                    user?.empresa?.nome || user?.first_name || user?.username
+                  }
+                  className="text-sm text-black max-w-40 lg:max-w-56 truncate group-hover:underline underline-offset-4 decoration-gray-400"
+                >
                   {user?.empresa?.nome || user?.first_name || user?.username}
                 </div>
               </button>

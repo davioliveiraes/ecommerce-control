@@ -16,12 +16,20 @@ const MODULES = [
   {
     index: '02',
     to: '/finance',
-    title: 'Finance',
+    title: 'Financeiro',
     description:
       'Painel consolidado de custos, receitas e despesas com séries temporais e indicadores de desempenho.',
     Icon: IconChart,
   },
 ]
+
+// Escalona a fonte pelo comprimento do nome para caber sem cortar na tela
+function classeTituloEmpresa(nome: string): string {
+  if (nome.length <= 18) return 'text-[clamp(2rem,5vw,4rem)]'
+  if (nome.length <= 30) return 'text-[clamp(1.75rem,4.2vw,3.25rem)]'
+  if (nome.length <= 45) return 'text-[clamp(1.5rem,3.4vw,2.5rem)]'
+  return 'text-[clamp(1.25rem,2.8vw,2rem)]'
+}
 
 export function HomePage() {
   const { user } = useAuth()
@@ -45,7 +53,11 @@ export function HomePage() {
             Controle interno
           </div>
 
-          <h1 className="font-display whitespace-nowrap font-semibold text-black leading-[1.02] text-[clamp(1.5rem,5vw,4rem)]">
+          <h1
+            className={`font-display font-semibold text-black leading-[1.08] text-balance break-words max-w-5xl mx-auto ${classeTituloEmpresa(
+              nomeEmpresa || 'Controle Interno',
+            )}`}
+          >
             {nomeEmpresa || 'Controle Interno'}
           </h1>
 

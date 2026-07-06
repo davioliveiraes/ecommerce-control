@@ -8,7 +8,7 @@ export function LancamentosFinanceirosPage() {
   const { user } = useAuth()
   const nomeEmpresa = user?.empresa?.nome || ''
 
-  useDocumentTitle(`Lançamentos — ${nomeEmpresa} Finance`)
+  useDocumentTitle(`Lançamentos Financeiros — ${nomeEmpresa}`)
 
   const navigate = useNavigate()
 
@@ -26,7 +26,7 @@ export function LancamentosFinanceirosPage() {
           </button>
           <div className="kicker mb-1.5">Módulo 02</div>
           <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
-            Lançamentos — {nomeEmpresa} Finance
+            Lançamentos Financeiros — {nomeEmpresa}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
             Entradas e saídas operacionais com status, categoria e ações de

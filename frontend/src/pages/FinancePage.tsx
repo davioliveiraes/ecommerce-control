@@ -25,14 +25,14 @@ type TabKey = 'visao_geral' | 'financeiro'
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: 'visao_geral', label: 'Visão geral' },
-  { key: 'financeiro', label: 'Financeiro' },
+  { key: 'financeiro', label: 'Finanças Gerais' },
 ]
 
 export function FinancePage() {
   const { user } = useAuth()
   const nomeEmpresa = user?.empresa?.nome || ''
 
-  useDocumentTitle(nomeEmpresa ? `Finance — ${nomeEmpresa}` : 'Finance')
+  useDocumentTitle(nomeEmpresa ? `Financeiro — ${nomeEmpresa}` : 'Financeiro')
 
   const [activeTab, setActiveTab] = useState<TabKey>('visao_geral')
 
@@ -181,7 +181,7 @@ function FinancePageHeader({ onExport, isExporting }: FinancePageHeaderProps) {
       <div className="min-w-0">
         <div className="kicker mb-1.5">Módulo 02</div>
         <h1 className="font-display text-3xl font-semibold text-black tracking-tight">
-          Dashboard — {nomeEmpresa} Finance
+          Dashboard Financeiro — {nomeEmpresa}
         </h1>
         <p className="text-sm text-gray-600 mt-1 max-w-3xl">
           Visão geral da loja (preenchida pelo analista) e resultado consolidado
@@ -301,7 +301,7 @@ function FinanceiroTab({
         <div className="flex flex-col gap-1">
           <div className="kicker">Dashboard</div>
           <h2 className="font-display text-2xl font-semibold text-black">
-            Financeiro
+            Finanças Gerais
           </h2>
           <p className="text-sm text-gray-600">
             Informações de resultados do Ecommerce da Empresa.
