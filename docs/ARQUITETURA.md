@@ -1,261 +1,103 @@
 # Arquitetura
 
-Documento técnico sobre como o projeto está organizado, por que algumas decisões foram tomadas e como os pedaços conversam entre si. Voltado para quem vai contribuir ou estudar a base de código.
+Como o **ecommerce-control** está organizado e por quê. Leitura para quem vai estudar ou reaproveitar o código.
 
-> Visão de alto nível: monólito modular Django no backend, SPA React no frontend, ambos isolados em containers e conversando exclusivamente por HTTP JSON com autenticação via bearer token.
+> Monólito modular Django + SPA React, conversando por HTTP JSON com bearer token assinado. **Multi-tenant por empresa**: cada conta enxerga apenas os próprios dados.
 
----
-
-## 1. Visão geral em uma imagem
+## 1. Visão geral
 
 ```
-                    ┌─────────────────────┐
-                    │  Browser (React SPA)│
-                    │  - Tailwind          │
-                    │  - TanStack Query    │
-                    │  - AG Grid           │
-                    └──────────┬──────────┘
-                               │  fetch + Bearer token
-                               ▼
-                    ┌─────────────────────┐
-                    │   Django + Ninja    │
-                    │  /api/* (REST-like) │
-                    │  /admin (built-in)  │
-                    └──────────┬──────────┘
-                               │  Django ORM
-                               ▼
-                    ┌─────────────────────┐
-                    │   PostgreSQL 16     │
-                    └─────────────────────┘
+Browser (React SPA) ──fetch + Bearer token──▶ Django + Ninja (/api/*) ──ORM──▶ PostgreSQL 16
 ```
 
-Tudo orquestrado por `docker-compose.yml`: 3 containers (`db`, `backend`, `frontend`), volumes locais para hot-reload em ambos os lados.
+3 containers via `docker-compose.yml` (`db`, `backend`, `frontend`), com hot-reload nos dois lados.
 
-## 2. Backend — Django + Ninja
-
-### 2.1 Apps internas
-
-Cada app tem responsabilidade única e fronteira clara:
+## 2. Backend
 
 | App | Responsabilidade |
 |---|---|
-| `catalog` | Marcas, categorias, subcategorias, produtos, variações. SKUs e EANs. |
-| `finance` | Categorias financeiras, lançamentos, dashboards consolidados. |
-| `importer` | Comando de importação por planilha (xlsx) — para popular catálogo a partir de Excel/Sheets. |
-| `reports` | Geração de PDFs com ReportLab. Não tem modelo próprio — só consome dados de outras apps. |
+| `accounts` | `Empresa` (o tenant), CNPJ, onboarding e helpers de tenancy. |
+| `catalog` | Marcas, categorias, produtos, variações (SKU/EAN). |
+| `finance` | Categorias financeiras, lançamentos, visão geral, dashboards. |
+| `importer` | Importação de catálogo via planilha (xlsx). |
+| `reports` | PDFs com ReportLab — sem modelos próprios. |
 
-Cada app segue a mesma estrutura interna:
+Estrutura interna padrão: `models/` (um por arquivo), `routers/` (Ninja), `schemas/` (Pydantic), `services/`, `tests/`, `management/commands/`.
 
-```
-apps/<nome>/
-├── models/         # um modelo por arquivo
-├── routers/        # endpoints Ninja, agrupados por recurso
-├── schemas/        # Pydantic input/output (DTOs)
-├── services/       # lógica de negócio reutilizável
-├── tests/          # pytest + Django TestCase
-├── admin.py        # ModelAdmin
-└── management/commands/   # seeds e tarefas batch
-```
+**Por que Django Ninja:** API tipada estilo FastAPI reusando ORM/admin do Django; OpenAPI automático em `/api/docs`; funções em vez de ViewSets.
 
-### 2.2 Por que Django Ninja
+### Autenticação
 
-- API tipada estilo FastAPI, mas reusando o Django ORM, admin e auth — sem precisar de DRF.
-- Schemas Pydantic geram OpenAPI automaticamente em `/api/docs`.
-- Funções simples em vez de classes — menos cerimônia que ViewSets.
+Bearer token assinado (`django.core.signing`, TTL default 12h) — sem sessão, sem CSRF. Endpoints em `/api/auth`:
 
-### 2.3 Autenticação
+- `register` — cria usuário + empresa (CNPJ validado) e semeia as categorias financeiras; auto-login.
+- `login` — usuário **ou** e-mail + senha.
+- `esqueci-senha` / `redefinir-senha` — link por e-mail com token de uso único (console em dev, SMTP via env em produção).
+- `me`, `empresa` (PUT), `alterar-senha`, `logout`.
 
-Bearer token assinado (`django.core.signing`) com TTL configurável em `AUTH_TOKEN_MAX_AGE_SECONDS` (default 12h). Sem sessões HTTP, sem CSRF — adequado para SPA + API stateless.
+### Multi-tenancy
 
-Fluxo: `POST /api/auth/login { username, password }` retorna `{ token, user }`. O frontend guarda o token em `localStorage` e envia em todas as requisições subsequentes.
+O tenant é a `Empresa` (OneToOne com o usuário — 1 conta = 1 empresa). Todos os modelos de negócio têm FK para `Empresa`; unicidades (nome, slug, SKU) valem **por empresa**.
 
-### 2.4 Modelos centrais
+Regra de ouro (`accounts/tenancy.py`): todo endpoint de dados chama `empresa_do_usuario(request)` e escopa queryset **e** criação por ela. FK simples em vez de schema-por-tenant (`django-tenants`): migrations únicas, zero infra extra.
 
-Hierarquia do catálogo:
+### Modelos
 
 ```
-Marca ──┐
-        ├── Produto ── Variação (SKU)
-Categoria ── Subcategoria ──┘
+Empresa ─┬─ Marca / Categoria ── Subcategoria
+         ├─ Produto ── Variação (SKU, margens calculadas em properties)
+         ├─ CategoriaFinanceira ── LancamentoFinanceiro
+         └─ VisaoGeralPeriodo (funil manual da loja)
 ```
 
-Hierarquia financeira:
+### Seeds
 
-```
-CategoriaFinanceira (RECEITA | CUSTO | DESPESA)
-    └── LancamentoFinanceiro (com data, valor, status, forma_pagamento, parcelas...)
-```
+`seed_catalog --empresa <id|nome> --nicho tech|supermercado [--limpar]` e `seed_finance --empresa ... --meses N`. Determinísticos com `random.seed(42 + empresa.pk)` — reproduzíveis, mas diferentes entre tenants (dados idênticos mascarariam vazamento entre empresas). Nichos novos = uma entrada no dict `NICHOS`.
 
-Variação tem campos calculados como properties (não no banco):
-
-- `margem_decimal` e `margem_percentual` (sobre `preco_site`).
-- `margem_promocional_decimal` e `margem_promocional_percentual` (sobre `preco_promocional`).
-
-### 2.5 Seeds determinísticos
-
-`catalog` e `finance` trazem comandos de seed (`seed_catalog`, `seed_finance`) que populam o banco com dados de demonstração usando `random.seed(42)`. A semente fixa garante números reprodutíveis em qualquer ambiente — útil para screenshots e para avaliar o painel preenchido sem precisar de uma loja real.
-
-## 3. Frontend — React + Vite
-
-### 3.1 Camadas
+## 3. Frontend
 
 ```
 src/
-├── api/         # axios clients + fetchers (1 arquivo por recurso)
-├── types/       # interfaces TS espelhando schemas Pydantic
-├── hooks/       # custom hooks (useDocumentTitle, useDownloadPdf...)
-├── components/  # componentes apresentacionais + de domínio
-├── pages/       # rotas top-level (1 por rota)
-└── contexts/    # AuthContext apenas
+├── api/         # axios + fetchers (1 por recurso)
+├── types/       # espelham os schemas Pydantic
+├── contexts/    # AuthContext + ThemeContext (únicos estados globais)
+├── components/  # por domínio (catalogo/, finance-dashboard/, reports/...)
+├── pages/       # 1 por rota
+└── hooks/
 ```
 
-Sem Redux/Zustand. Estado de servidor fica no TanStack Query; estado de UI fica em `useState` local. Auth é o único state global.
-
-### 3.2 Por que sem Recharts/Chart.js
-
-Os gráficos do dashboard (linha temporal, donut, barras horizontais, barras verticais) são SVG cru, ~100-200 linhas cada. Vantagens:
-
-- **Bundle menor**: economiza ~150KB gzip.
-- **Controle visual total**: paleta exata, tooltips customizados, animações específicas.
-- **Tooltips React**: nada de `<title>` SVG nativo (delay do browser + estilo limitado). Cada chart tem hover via `useState` + overlay absoluto.
-
-Os componentes de gráfico:
-
-- `TimelineChart.tsx` — linha SVG com flip automático de tooltip nos pontos do topo.
-- `CategoryPieChart.tsx` — donut + painel de filtros lateral.
-- `PaymentStatisticsPanel.tsx` — barras verticais agrupadas por forma de pagamento.
-- `MiniSparkline.tsx` — mini linha + área para os KPI cards da Visão Geral.
-
-### 3.3 AG Grid no catálogo
-
-Catálogo usa AG Grid Community por causa do agrupamento de variações por produto (row grouping) + virtualização nativa para listas grandes. Configuração relevante em `frontend/src/components/catalogo/CatalogoGrid.tsx`:
-
-- `rowGroup: true` em `descricao_site_group` (agrupa variações pelo produto pai).
-- `quickFilterText` para busca em todas as colunas.
-- Cell renderers customizados por tipo (preço, percentual, status badge, ações).
-
-### 3.4 Formulários
-
-`React Hook Form` + `Zod`:
-
-- Schema Zod por formulário (`schemas/produtoSchema.ts`, etc).
-- `zodResolver` integra validação no submit.
-- Erros campo-a-campo via `formState.errors`.
+- **Sem Redux** — server state no TanStack Query, UI state em `useState`.
+- **Rotas públicas** (`/login`, `/esqueci-senha`, `/redefinir-senha`); o resto atrás de `ProtectedRoute`.
+- **Tema claro/escuro** — classe `dark` no `<html>` (Tailwind), persistido em `localStorage`, segue o sistema na primeira visita.
+- **Gráficos em SVG cru** (sem Recharts/Chart.js): bundle menor, controle total de paleta nos dois temas, tooltips React instantâneos.
+- **AG Grid Community** no catálogo: agrupamento de variações por produto + edição inline de preços com `PATCH`.
+- **Formulários** com React Hook Form + Zod (auth usa `useState` direto — poucos campos).
 
 ## 4. Relatórios PDF
 
-`apps/reports` usa ReportLab. Cada relatório tem:
+Cada relatório = router (filtros → `FileResponse`) + service (monta o PDF) + helpers em `pdf_base.py`. Layout padrão: cabeçalho → KPIs → gráficos → tabela. Geração streaming e sempre escopada pela empresa do usuário.
 
-1. Um **router** (`routers/<nome>.py`) que recebe os filtros e retorna `FileResponse`.
-2. Um **service** (`services/<nome>_report.py`) que monta o PDF.
-3. Helpers compartilhados em `services/pdf_base.py` (cabeçalho, footer, fonts, paleta).
+## 5. Convenções
 
-Padrão de layout:
+- Imports sem prefixo `apps.` (`from finance.models import ...` — `backend/apps` está no PYTHONPATH).
+- Todo router de negócio escopa pela empresa; nunca confiar em ID vindo do cliente.
+- Um componente por arquivo, Tailwind direto, comentários só para o *porquê*.
 
-```
-┌──────────────────────────────────────┐
-│  Cabeçalho com kicker + título       │
-│  Faixa de filtros aplicados          │
-├──────────────────────────────────────┤
-│  KPIs em cards horizontais           │
-├──────────────────────────────────────┤
-│  Gráficos auxiliares (opcional)      │
-├──────────────────────────────────────┤
-│  Tabela principal com paginação      │
-└──────────────────────────────────────┘
-```
-
-A geração é **streaming**: o response é entregue assim que o `Canvas` é salvo, sem buffer intermediário.
-
-### Modal de exportação
-
-`frontend/src/components/reports/ExportPdfModal.tsx` é um modal reutilizável que recebe:
-
-- `colunasDisponiveis`: lista de `{ id, label }`.
-- `filtrosExtras`: JSX opcional para filtros específicos do relatório (ex.: "apenas promocionais").
-- `onConfirm(colunas)`: callback com as colunas selecionadas.
-
-O download em si é abstraído pelo hook `useDownloadPdf()`.
-
-## 5. Fluxo de dados típico
-
-Exemplo: usuário aplica filtro de data no dashboard financeiro.
-
-```
-[Browser] DashboardFilters muda dataInicio
-     │
-     ▼
-[React] useState atualiza → queryKey muda
-     │
-     ▼
-[TanStack Query] dispara fetchFinanceDashboard()
-     │
-     ▼
-[Axios] GET /api/finance/dashboard?data_inicio=...
-     │  Authorization: Bearer <token>
-     ▼
-[Django Ninja] router resolve schema, chama service
-     │
-     ▼
-[Django ORM] agrega LancamentoFinanceiro (group by + sum)
-     │
-     ▼
-[PostgreSQL] retorna rows agregadas
-     │
-     ▼
-[Django Ninja] serializa via Pydantic schema → JSON
-     │
-     ▼
-[TanStack Query] cacheia + entrega aos componentes
-     │
-     ▼
-[React] KpiCards, TimelineChart, CategoryPieChart re-renderizam
-```
-
-Tempo médio observado em dev (Docker local com seed completo): ~80-120ms por request.
-
-## 6. Convenções de código
-
-### Backend
-
-- **Tipos**: type hints em tudo (Pydantic + Python 3.11 generics).
-- **Imports**: `from finance.models import ...` (a pasta `backend/apps` está no PYTHONPATH).
-- **Migrations**: nunca editar uma migration já aplicada em desenvolvimento compartilhado.
-- **Comentários docstring**: apenas quando o que é não-óbvio. Funções pequenas com nome bom não precisam.
-
-### Frontend
-
-- **Componente = um arquivo**. Nome em PascalCase. Sem `index.ts` re-export.
-- **Tailwind direto**. Sem CSS modules, sem styled-components. Quando precisa de composição, usa `clsx`-like (`${} ${}`).
-- **Sem comentários explicando o quê**. O código bem nomeado serve. Só comente o porquê.
-
-## 7. Testes
-
-Backend: pytest + Django TestCase. Cobertura focada em:
-
-- Serviços críticos (cálculo de margens, agregações de dashboard).
-- Endpoints de catálogo e finance.
-- Geração de PDF (smoke test que confere bytes válidos).
-
-Rodar:
+## 6. Testes
 
 ```bash
-docker exec ecommerce_backend pytest
+docker compose exec backend python manage.py test
 ```
 
-Frontend: ainda não tem suíte automatizada — está no roadmap (Vitest + Testing Library).
+Django TestCase com runner customizado (`config/test_runner.py`). Cobre serviços de cálculo, endpoints de catálogo/finance e smoke de PDF. **Lacunas conhecidas:** testes do fluxo de contas, isolamento multi-tenant e suíte de frontend (Vitest).
 
-## 8. Decisões que foram consideradas e descartadas
+## 7. Decisões descartadas
 
 | Considerado | Por que descartado |
 |---|---|
 | DRF | Mais cerimônia que Ninja para a mesma necessidade. |
-| Next.js | SSR não traz benefício para painel autenticado. |
-| Recharts | Bundle grande + tooltip nativo sutil. |
-| Storybook | Custo de manutenção alto para o escopo atual. |
-| GraphQL | Endpoints REST resolvem com schemas Pydantic; sem clientes múltiplos consumindo. |
-| Celery | Sem tarefas assíncronas hoje; geração de PDF é fast o suficiente síncrona. |
-
----
-
-Para reabrir qualquer uma dessas decisões, edite este documento junto com a PR — o histórico vira parte do raciocínio.
+| Sessões + CSRF | Token assinado é mais simples para SPA stateless. |
+| `django-tenants` | FK + escopo no router resolve sem infra extra. |
+| Next.js | SSR não ajuda em painel autenticado. |
+| Recharts | Bundle grande, tooltip nativo fraco. |
+| GraphQL / Celery / Storybook | Complexidade sem demanda no escopo atual. |
