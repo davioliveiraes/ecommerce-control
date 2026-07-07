@@ -1,4 +1,4 @@
-"""Relatório PDF do dashboard financeiro no mesmo layout rico da Visão Geral."""
+"""Relatório PDF das Finanças Gerais (layout rico, paleta preto e branco)."""
 
 from collections import defaultdict
 from datetime import date
@@ -6,20 +6,25 @@ from decimal import Decimal
 from typing import Optional
 
 from django.utils import timezone
+from reportlab.lib import colors
 
-from finance.models import LancamentoFinanceiro
+from finance.models import CategoriaFinanceira, LancamentoFinanceiro
 
 from .report_design import (
-    GREEN,
-    NAVY,
-    ORANGE,
-    PURPLE,
+    SOFT_BG,
     RichReport,
     fmt_brl,
     fmt_int,
     fmt_pct,
     ratio_pct,
 )
+
+# Paleta monocromática — segue o padrão preto/branco do painel
+PRETO = colors.HexColor("#111111")
+PRETO_BANNER = colors.HexColor("#0A0A0A")
+CINZA_BANNER = colors.HexColor("#2E2E2E")
+CINZA_ESCURO = colors.HexColor("#3F3F46")
+CINZA_MEDIO = colors.HexColor("#52525B")
 
 _MESES = {
     "01": "jan", "02": "fev", "03": "mar", "04": "abr", "05": "mai", "06": "jun",
@@ -60,13 +65,23 @@ def gerar_relatorio_finance_dashboard(
         qs = qs.filter(categoria_id=categoria_id)
     lancamentos = list(qs)
 
+    categoria_nome = "Todas"
+    if categoria_id is not None:
+        categoria = CategoriaFinanceira.objects.filter(
+            id=categoria_id, empresa=empresa
+        ).first()
+        categoria_nome = categoria.nome if categoria else f"#{categoria_id}"
+
     receitas = sum((l.valor for l in lancamentos if l.tipo == "RECEITA"), Decimal("0"))
     custos = sum((l.valor for l in lancamentos if l.tipo == "CUSTO"), Decimal("0"))
     despesas = sum((l.valor for l in lancamentos if l.tipo == "DESPESA"), Decimal("0"))
-    resultado = receitas - custos - despesas
+    saidas = custos + despesas
+    resultado = receitas - saidas
     margem = ratio_pct(float(resultado), float(receitas)) if receitas else 0.0
 
-    serie = defaultdict(lambda: {"receita": Decimal("0"), "saida": Decimal("0")})
+    serie = defaultdict(
+        lambda: {"receita": Decimal("0"), "custo": Decimal("0"), "despesa": Decimal("0")}
+    )
     por_categoria_receita = defaultdict(lambda: Decimal("0"))
     por_categoria_saida = defaultdict(lambda: Decimal("0"))
     por_forma = defaultdict(lambda: Decimal("0"))
@@ -78,55 +93,85 @@ def gerar_relatorio_finance_dashboard(
             por_categoria_receita[cat] += l.valor
             forma = l.get_forma_pagamento_display() if l.forma_pagamento else "Não informado"
             por_forma[forma] += l.valor
+        elif l.tipo == "CUSTO":
+            serie[chave]["custo"] += l.valor
+            por_categoria_saida[cat] += l.valor
         else:
-            serie[chave]["saida"] += l.valor
+            serie[chave]["despesa"] += l.valor
             por_categoria_saida[cat] += l.valor
 
     meses = sorted(serie.items())
 
-    r = RichReport()
+    # --- montagem ------------------------------------------------------------
+    r = RichReport(accent=PRETO, banner_bg=PRETO_BANNER, banner_soft=CINZA_BANNER)
     agora = timezone.localtime()
+    r.set_page_footer(f"Controle Interno · {empresa.nome}")
 
-    # --- Página 1: cabeçalho + KPIs ---
     r.header_band(
         wordmark=empresa.nome,
-        kicker="RELATÓRIO FINANCEIRO — CONTROLE INTERNO",
-        title="Resultado financeiro",
+        kicker=f"{empresa.nome} Ecommerce Control · Relatório financeiro".upper(),
+        title="Finanças gerais",
         subtitle="Consolidação de receitas, custos e despesas pagos no período, "
-        "com evolução mensal e composição por categoria.",
-        badge=f"PERÍODO · {len(lancamentos)} LANÇAMENTO(S)",
+        "com evolução mensal, composição por categoria e formas de pagamento.",
+        badge=f"FINANÇAS GERAIS · {agora.strftime('%d/%m/%Y')}",
         meta_lines=[
+            "Módulo 02 · Finanças Gerais",
             f"Período: <b>{_label_periodo(data_inicio, data_fim)}</b>",
-            f"Gerado em: <b>{agora.strftime('%d/%m/%Y %H:%M')}</b>",
-            "Base: lançamentos pagos",
+            f"Gerado em: <b>{agora.strftime('%d/%m/%Y')} às {agora.strftime('%H:%M')}</b>",
         ],
     )
 
+    r.section("Visão geral")
+    r.box_text(
+        f"Este relatório consolida o resultado financeiro da loja virtual {empresa.nome} "
+        "a partir dos lançamentos pagos registrados no módulo Financeiro, com leitura da "
+        "evolução mensal da receita, das maiores categorias e das formas de pagamento."
+    )
+
+    r.section("Filtros aplicados")
+    r.filters_box(
+        [
+            ("Período", _label_periodo(data_inicio, data_fim)),
+            ("Categoria", categoria_nome),
+            ("Lançamentos no recorte", f"{len(lancamentos)}"),
+            ("Base", "Lançamentos pagos"),
+        ]
+    )
+
     if not lancamentos:
-        r.section("Sem dados no período")
         r.note(
             "Nenhum lançamento pago foi encontrado para o intervalo selecionado. "
-            "Ajuste o período ou registre lançamentos para gerar este relatório."
+            "Ajuste o período ou registre lançamentos para gerar este relatório.",
+            accent=PRETO,
         )
         return r.gerar()
 
     r.section("Indicadores do período")
     r.kpi_cards(
         [
-            ("Receita", fmt_brl(receitas), GREEN),
-            ("Custos", fmt_brl(custos), ORANGE),
-            ("Despesas", fmt_brl(despesas), ORANGE),
-            ("Resultado", fmt_brl(resultado), NAVY if resultado >= 0 else ORANGE),
+            ("Receita", fmt_brl(receitas), PRETO),
+            ("Custos", fmt_brl(custos), PRETO),
+            ("Despesas", fmt_brl(despesas), PRETO),
+            ("Resultado", fmt_brl(resultado), PRETO),
         ]
+    )
+    r.stat_cards(
+        [
+            ("Margem do período", fmt_pct(margem)),
+            ("Saídas totais", fmt_brl(saidas)),
+            ("Lançamentos pagos", fmt_int(len(lancamentos))),
+            ("Meses com movimento", fmt_int(len(meses))),
+        ],
+        n_por_linha=4,
     )
 
     r.page_break()
 
-    # --- Página 2: evolução mensal + composição ---
+    # --- página 2: evolução mensal + composição ---
     r.section("Evolução mensal — receita")
     r.bars(
         [
-            (_mes_legivel(mes), float(v["receita"]), fmt_brl(v["receita"]), GREEN)
+            (_mes_legivel(mes), float(v["receita"]), fmt_brl(v["receita"]), PRETO)
             for mes, v in meses
         ]
     )
@@ -135,10 +180,11 @@ def gerar_relatorio_finance_dashboard(
         melhor = max(meses, key=lambda m: m[1]["receita"])
         pior = min(meses, key=lambda m: m[1]["receita"])
         r.callout(
-            f"Melhor mês de receita: <b>{_mes_legivel(melhor[0])}</b> com {fmt_brl(melhor[1]['receita'])}. "
-            f"Menor: <b>{_mes_legivel(pior[0])}</b> com {fmt_brl(pior[1]['receita'])}. "
+            f"Melhor mês de receita: {_mes_legivel(melhor[0])} com {fmt_brl(melhor[1]['receita'])}. "
+            f"Menor: {_mes_legivel(pior[0])} com {fmt_brl(pior[1]['receita'])}. "
             "Compare com investimento de marketing e sazonalidade para entender as variações.",
-            accent=GREEN,
+            accent=PRETO,
+            bg=SOFT_BG,
         )
 
     top_receitas = sorted(por_categoria_receita.items(), key=lambda x: x[1], reverse=True)[:5]
@@ -153,7 +199,7 @@ def gerar_relatorio_finance_dashboard(
 
     r.page_break()
 
-    # --- Página 3: formas de pagamento + leituras ---
+    # --- página 3: formas de pagamento + leituras ---
     total_forma = sum(por_forma.values()) or Decimal("1")
     formas_ordenadas = sorted(por_forma.items(), key=lambda x: x[1], reverse=True)[:3]
     r.section("Formas de pagamento (receita recebida)")
@@ -166,37 +212,47 @@ def gerar_relatorio_finance_dashboard(
                     fmt_brl(v),
                 )
                 for nome, v in formas_ordenadas
-            ]
+            ],
+            accent=PRETO,
         )
     r.note(
         "Toda a receita entra pela conta de pagamentos da NuvemShop (NuvemPago). "
-        "A divisão acima é por forma de pagamento escolhida pelo cliente (Pix, cartão, boleto)."
+        "A divisão acima é por forma de pagamento escolhida pelo cliente (Pix, cartão, boleto).",
+        accent=PRETO,
     )
 
-    qtd_pagos = len(lancamentos)
+    leituras = [
+        (
+            "Resultado do período.",
+            f"Receita de {fmt_brl(receitas)} contra {fmt_brl(saidas)} de saídas, "
+            f"resultando em {fmt_brl(resultado)} (margem de {fmt_pct(margem)}).",
+        ),
+        (
+            "Peso das saídas.",
+            f"Custos somam {fmt_brl(custos)} e despesas {fmt_brl(despesas)}. "
+            "Acompanhar as categorias de maior saída ajuda a proteger a margem.",
+        ),
+        (
+            "Distribuição temporal.",
+            f"Foram {fmt_int(len(lancamentos))} lançamentos pagos distribuídos em "
+            f"{fmt_int(len(meses))} mês(es) do período.",
+        ),
+    ]
+    if formas_ordenadas:
+        forma_nome, forma_valor = formas_ordenadas[0]
+        leituras.append(
+            (
+                "Forma de pagamento principal.",
+                f"{forma_nome} concentra {fmt_pct(ratio_pct(float(forma_valor), float(total_forma)))} "
+                f"da receita recebida ({fmt_brl(forma_valor)}).",
+            )
+        )
     r.section("Principais leituras")
-    r.numbered_list(
-        [
-            (
-                "Resultado do período.",
-                f"Receita de {fmt_brl(receitas)} contra {fmt_brl(custos + despesas)} de saídas, "
-                f"resultando em {fmt_brl(resultado)} (margem de {fmt_pct(margem)}).",
-            ),
-            (
-                "Peso das saídas.",
-                f"Custos somam {fmt_brl(custos)} e despesas {fmt_brl(despesas)}. "
-                "Acompanhar as categorias de maior saída ajuda a proteger a margem.",
-            ),
-            (
-                "Distribuição temporal.",
-                f"Foram {qtd_pagos} lançamentos pagos distribuídos em {len(meses)} mês(es) do período.",
-            ),
-        ]
-    )
+    r.numbered_list(leituras, accent=PRETO)
 
     r.page_break()
 
-    # --- Página 4: recomendações + rodapé ---
+    # --- página 4: recomendações + detalhamento mensal ---
     r.section("Recomendações")
     r.numbered_list(
         [
@@ -213,12 +269,34 @@ def gerar_relatorio_finance_dashboard(
                 "Cruze a receita recebida com os repasses da conta NuvemShop para garantir consistência.",
             ),
         ],
-        accent=PURPLE,
+        accent=PRETO,
     )
 
-    r.footer_note(
-        f"Relatório interno · {empresa.nome} — Loja virtual (NuvemShop)",
-        f"Gerado a partir do painel “Financeiro” · {agora.strftime('%d/%m/%Y %H:%M')}",
+    r.section("Detalhamento mensal")
+    # Resumo antes da tabela: se ela quebrar de página, os totais não ficam
+    # órfãos em uma página quase vazia.
+    r.filters_box(
+        [
+            ("Meses no recorte", f"{len(meses)}"),
+            ("Receita total", fmt_brl(receitas)),
+            ("Resultado", fmt_brl(resultado)),
+        ]
+    )
+    linhas = [
+        [
+            _mes_legivel(mes),
+            fmt_brl(v["receita"]),
+            fmt_brl(v["custo"]),
+            fmt_brl(v["despesa"]),
+            fmt_brl(v["receita"] - v["custo"] - v["despesa"]),
+        ]
+        for mes, v in reversed(meses)
+    ]
+    r.data_table(
+        ["Mês", "Receita", "Custos", "Despesas", "Resultado"],
+        linhas,
+        fracs=[1.2, 1.3, 1.3, 1.3, 1.3],
+        aligns=["L", "R", "R", "R", "R"],
     )
 
     return r.gerar()

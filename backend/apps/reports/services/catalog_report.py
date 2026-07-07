@@ -1,14 +1,22 @@
-"""Geração do PDF de relatório do catálogo."""
+"""Geração do PDF de relatório do catálogo (layout rico, paleta preto e branco)."""
 
 from collections import Counter
 from typing import Optional
 
 from django.db.models import Q
+from django.utils import timezone
+from reportlab.lib import colors
 
 from accounts.models import Empresa
 from catalog.models import Marca, Subcategoria, Variacao
 
-from .pdf_base import RelatorioPDF
+from .report_design import RichReport, ratio_pct
+
+# Paleta monocromática — segue o padrão preto/branco do painel
+PRETO = colors.HexColor("#111111")
+PRETO_BANNER = colors.HexColor("#0A0A0A")
+CINZA_BANNER = colors.HexColor("#2E2E2E")
+CINZA_BARRA = colors.HexColor("#9CA3AF")
 
 
 def format_brl(valor) -> str:
@@ -67,6 +75,24 @@ COLUNAS_DISPONIVEIS = {
 
 COLUNAS_PADRAO = ["sku", "produto_descricao_site", "variacao", "preco_site"]
 
+# Largura relativa e alinhamento de cada coluna na tabela de detalhamento
+LAYOUT_COLUNAS = {
+    "sku": (1.6, "L"),
+    "produto_descricao_site": (3.0, "L"),
+    "produto_descricao_gestaoclick": (3.0, "L"),
+    "variacao": (2.0, "L"),
+    "marca": (1.2, "L"),
+    "subcategoria": (1.5, "L"),
+    "custo": (1.0, "R"),
+    "preco_loja": (1.0, "R"),
+    "preco_site": (1.0, "R"),
+    "preco_promocional": (1.1, "R"),
+    "margem_percentual": (1.0, "R"),
+    "margem_promocional_percentual": (1.2, "R"),
+    "status_nuvemshop": (1.3, "L"),
+    "status_integracao": (1.3, "L"),
+}
+
 
 def gerar_relatorio_catalogo(
     empresa: Empresa,
@@ -102,107 +128,244 @@ def gerar_relatorio_catalogo(
         )
     qs = qs.order_by("produto__descricao_produto_site", "produto__nome_site", "descricao")
 
-    filtros = {"Status": "Ativos + inativos" if incluir_inativos else "Apenas ativos"}
+    filtros = [("Status", "Ativos + inativos" if incluir_inativos else "Apenas ativos")]
     if apenas_promocional:
-        filtros["Promoção"] = "Apenas variações com preço promocional"
+        filtros.append(("Promoção", "Apenas variações com preço promocional"))
     if marca_id is not None:
         marca = Marca.objects.filter(id=marca_id, empresa=empresa).first()
         if marca:
-            filtros["Marca"] = marca.nome
+            filtros.append(("Marca", marca.nome))
     if subcategoria_id is not None:
         subcategoria = Subcategoria.objects.filter(
             id=subcategoria_id, empresa=empresa
         ).first()
         if subcategoria:
-            filtros["Subcategoria"] = subcategoria.nome
+            filtros.append(("Subcategoria", subcategoria.nome))
     if busca:
-        filtros["Busca"] = busca
+        filtros.append(("Busca", busca))
+    filtros.append(
+        (
+            "Colunas no relatório",
+            ", ".join(COLUNAS_DISPONIVEIS[coluna][0] for coluna in colunas_validas),
+        )
+    )
 
     variacoes = list(qs)
+
+    # --- agregados ---------------------------------------------------------
+    total = len(variacoes)
+    produtos = {variacao.produto_id for variacao in variacoes}
+    ativos = sum(1 for variacao in variacoes if variacao.ativo)
+    inativas = total - ativos
+    precos_site = [v.preco_site for v in variacoes if v.preco_site is not None]
+    sem_preco_site = total - len(precos_site)
+    margens = [v.margem_percentual for v in variacoes if v.margem_percentual is not None]
+    preco_medio = sum(precos_site) / len(precos_site) if precos_site else None
+    margem_media = sum(margens) / len(margens) if margens else None
+    em_promocao = sum(1 for v in variacoes if v.preco_promocional is not None)
+    nuvemshop_ativo = sum(1 for v in variacoes if v.status_nuvemshop == "ATIVO")
+    integracao_ativa = sum(1 for v in variacoes if v.status_integracao == "ATIVO")
+    integracao_inativa = total - integracao_ativa
+    marcas = Counter(
+        v.produto.marca.nome if v.produto.marca else "Sem marca" for v in variacoes
+    )
+    subcategorias = Counter(
+        v.produto.subcategoria.nome if v.produto.subcategoria else "Sem subcategoria"
+        for v in variacoes
+    )
+
+    # --- montagem ------------------------------------------------------------
+    r = RichReport(accent=PRETO, banner_bg=PRETO_BANNER, banner_soft=CINZA_BANNER)
+    agora = timezone.localtime()
+    r.set_page_footer(f"Controle Interno · {empresa.nome}")
+
+    r.header_band(
+        wordmark=empresa.nome,
+        kicker=f"{empresa.nome} Ecommerce Control · Relatório de desempenho".upper(),
+        title="Catálogo",
+        subtitle="Posição do catálogo: disponibilidade, cobertura de preços "
+        "e agrupamentos comerciais.",
+        badge=f"CATÁLOGO · {agora.strftime('%d/%m/%Y')}",
+        meta_lines=[
+            "Módulo 01 · Catálogo",
+            f"Gerado em: <b>{agora.strftime('%d/%m/%Y')} às {agora.strftime('%H:%M')}</b>",
+        ],
+    )
+
+    r.section("Visão geral")
+    r.box_text(
+        f"Este relatório apresenta a posição do catálogo {empresa.nome} no recorte "
+        "selecionado, com leitura de disponibilidade, cobertura de preços e "
+        "agrupamentos comerciais antes da listagem operacional."
+    )
+
+    r.section("Filtros aplicados")
+    r.filters_box(filtros)
+
+    r.section("Indicadores do catálogo")
+    r.kpi_cards(
+        [
+            ("Variações", f"{total}", PRETO),
+            ("Produtos", f"{len(produtos)}", PRETO),
+            ("Ativas", f"{ativos}", PRETO),
+            ("Preço site médio", format_brl(preco_medio), PRETO),
+        ]
+    )
+    r.stat_cards(
+        [
+            ("Margem média", format_percent(margem_media)),
+            ("Com preço site", f"{len(precos_site)}"),
+            ("Com preço promocional", f"{em_promocao}"),
+            ("Marcas", f"{len(marcas)}"),
+            ("Subcategorias", f"{len(subcategorias)}"),
+        ]
+    )
+
+    r.section("Distribuição de status")
+    r.two_bar_panels(
+        (
+            "Status NuvemShop",
+            [
+                ("Ativo", nuvemshop_ativo, ratio_pct(nuvemshop_ativo, total) / 100, PRETO),
+                ("Inativo", total - nuvemshop_ativo, ratio_pct(total - nuvemshop_ativo, total) / 100, CINZA_BARRA),
+            ],
+        ),
+        (
+            "Status de integração",
+            [
+                ("Ativo", integracao_ativa, ratio_pct(integracao_ativa, total) / 100, PRETO),
+                ("Inativo", integracao_inativa, ratio_pct(integracao_inativa, total) / 100, CINZA_BARRA),
+            ],
+        ),
+    )
+
+    if not variacoes:
+        r.note("Nenhuma variação encontrada no recorte selecionado.", accent=PRETO)
+        return r.gerar()
+
+    r.page_break()
+
+    # --- página 2: agrupamentos, leituras e recomendações ---------------------
+    r.section("Principais agrupamentos")
+    r.two_panels(
+        "Por subcategoria",
+        [(label, f"{valor}") for label, valor in subcategorias.most_common(5)],
+        "Por marca",
+        [(label, f"{valor}") for label, valor in marcas.most_common(5)],
+    )
+
+    marca_lider, marca_lider_qtd = marcas.most_common(1)[0]
+    pct_marca_lider = ratio_pct(marca_lider_qtd, total)
+    concentracao = (
+        "Concentração alta aumenta a dependência de poucos fornecedores."
+        if pct_marca_lider >= 50
+        else "Distribuição relativamente equilibrada entre marcas."
+    )
+
+    leituras = [
+        (
+            "Tamanho e disponibilidade.",
+            f"{total} variações em {len(produtos)} produtos no recorte, {ativos} ativas "
+            f"({format_percent(ratio_pct(ativos, total))}). {inativas} estão inativas.",
+        ),
+        (
+            "Cobertura de preço de site.",
+            f"{len(precos_site)} variações com preço de site definido "
+            f"({format_percent(ratio_pct(len(precos_site), total))}); "
+            + (
+                f"{sem_preco_site} ainda sem preço — pontos cegos para a vitrine."
+                if sem_preco_site
+                else "nenhuma pendência de preço."
+            ),
+        ),
+        (
+            "Preço e margem médios.",
+            f"Preço de site médio de {format_brl(preco_medio)} e margem média de "
+            f"{format_percent(margem_media)} entre as variações com dados.",
+        ),
+        (
+            "Concentração por marca.",
+            f"'{marca_lider}' lidera com {marca_lider_qtd} variações "
+            f"({format_percent(pct_marca_lider)} do recorte). {concentracao}",
+        ),
+        (
+            "Integração GestãoClick–NuvemShop.",
+            (
+                f"{integracao_inativa} variações com integração inativa "
+                f"({format_percent(ratio_pct(integracao_inativa, total))}) — risco de "
+                "divergência de estoque/preço entre os sistemas."
+                if integracao_inativa
+                else "Todas as variações com integração ativa entre os sistemas."
+            ),
+        ),
+        (
+            "Promoções ativas.",
+            (
+                f"{em_promocao} variações com preço promocional "
+                f"({format_percent(ratio_pct(em_promocao, total))})."
+                if em_promocao
+                else "Nenhuma variação com preço promocional no recorte."
+            ),
+        ),
+    ]
+
+    r.section("Principais leituras")
+    r.numbered_list(leituras, accent=PRETO)
+
+    recomendacoes = []
+    if sem_preco_site:
+        recomendacoes.append(
+            (
+                "Completar preços de site faltantes.",
+                f"{sem_preco_site} variações sem preço de site não aparecem corretamente "
+                "na vitrine. Priorizar o preenchimento para não perder exposição.",
+            )
+        )
+    if integracao_inativa:
+        recomendacoes.append(
+            (
+                "Reativar integrações pendentes.",
+                f"Verificar as {integracao_inativa} variações com integração inativa para "
+                "evitar divergências entre GestãoClick e NuvemShop.",
+            )
+        )
+    if inativas:
+        recomendacoes.append(
+            (
+                "Revisar variações inativas.",
+                f"{inativas} variações inativas no recorte — confirmar se é ruptura de "
+                "estoque ou descontinuação e ajustar o catálogo.",
+            )
+        )
+    recomendacoes.append(
+        (
+            "Padronizar descrições.",
+            "Manter descrições de site e GestãoClick alinhadas facilita conferência, "
+            "busca interna e geração de relatórios.",
+        )
+    )
+
+    r.section("Recomendações")
+    r.numbered_list(recomendacoes[:3], accent=PRETO)
+
+    r.page_break()
+
+    # --- página 3+: detalhamento ----------------------------------------------
     headers = [COLUNAS_DISPONIVEIS[coluna][0] for coluna in colunas_validas]
     linhas = [
         [str(COLUNAS_DISPONIVEIS[coluna][1](variacao)) for coluna in colunas_validas]
         for variacao in variacoes
     ]
+    fracs = [LAYOUT_COLUNAS[coluna][0] for coluna in colunas_validas]
+    aligns = [LAYOUT_COLUNAS[coluna][1] for coluna in colunas_validas]
 
-    total = len(variacoes)
-    produtos = {variacao.produto_id for variacao in variacoes}
-    ativos = sum(1 for variacao in variacoes if variacao.ativo)
-    com_preco_site = [
-        variacao.preco_site for variacao in variacoes if variacao.preco_site is not None
-    ]
-    margens = [
-        variacao.margem_percentual
-        for variacao in variacoes
-        if variacao.margem_percentual is not None
-    ]
-    preco_medio = sum(com_preco_site) / len(com_preco_site) if com_preco_site else None
-    margem_media = sum(margens) / len(margens) if margens else None
-    status_nuvemshop = Counter(
-        format_status(variacao.status_nuvemshop) for variacao in variacoes
-    )
-    status_integracao = Counter(
-        format_status(variacao.status_integracao) for variacao in variacoes
-    )
-    em_promocao = sum(1 for v in variacoes if v.preco_promocional is not None)
-    precos_promo = [v.preco_promocional for v in variacoes if v.preco_promocional is not None]
-    promo_medio = sum(precos_promo) / len(precos_promo) if precos_promo else None
-    marcas = Counter(
-        variacao.produto.marca.nome if variacao.produto.marca else "Sem marca"
-        for variacao in variacoes
-    )
-    subcategorias = Counter(
-        variacao.produto.subcategoria.nome
-        if variacao.produto.subcategoria
-        else "Sem subcategoria"
-        for variacao in variacoes
+    r.section("Detalhamento das variações")
+    r.data_table(headers, linhas, fracs=fracs, aligns=aligns)
+    r.totals_line(
+        [
+            ("Total de registros", f"{total}"),
+            ("Amostra exibida", f"{len(linhas)}"),
+        ]
     )
 
-    pdf = RelatorioPDF(
-        subtitulo="Relatório de Catálogo",
-        orientacao="landscape",
-        empresa_nome=empresa.nome,
-    )
-    pdf.adicionar_secao("Visão geral")
-    pdf.adicionar_texto(
-        "Este relatório apresenta a posição do catálogo no recorte "
-        "selecionado, com leitura de disponibilidade, cobertura de preços e "
-        "agrupamentos comerciais antes da listagem operacional."
-    )
-    kpis = [
-        ("Variações", f"{total}"),
-        ("Produtos", f"{len(produtos)}"),
-        ("Ativas", f"{ativos}"),
-        ("Preço site médio", format_brl(preco_medio)),
-        ("Margem média", format_percent(margem_media)),
-        ("Em promoção", f"{em_promocao}"),
-        ("Marcas", f"{len(marcas)}"),
-        ("Subcategorias", f"{len(subcategorias)}"),
-    ]
-    if apenas_promocional:
-        kpis[5] = ("Preço promo médio", format_brl(promo_medio))
-    pdf.adicionar_kpis(kpis)
-    pdf.adicionar_filtros(filtros)
-    pdf.adicionar_grafico_barras(
-        "Status NuvemShop",
-        [(label, float(valor)) for label, valor in status_nuvemshop.most_common()],
-    )
-    pdf.adicionar_grafico_barras(
-        "Status de integração",
-        [(label, float(valor)) for label, valor in status_integracao.most_common()],
-    )
-    pdf.adicionar_secao("Principais agrupamentos")
-    pdf.adicionar_tabela(
-        ["Subcategoria", "Variações"],
-        [[label, str(valor)] for label, valor in subcategorias.most_common(8)]
-        or [["Sem registros", "0"]],
-    )
-    pdf.adicionar_tabela(
-        ["Marca", "Variações"],
-        [[label, str(valor)] for label, valor in marcas.most_common(8)]
-        or [["Sem registros", "0"]],
-    )
-    pdf.adicionar_secao("Detalhamento")
-    pdf.adicionar_tabela(headers, linhas or [["Sem registros"] + [""] * (len(headers) - 1)])
-    pdf.adicionar_totais([f"Total de registros: {len(variacoes)}"])
-    return pdf.gerar()
+    return r.gerar()

@@ -10,6 +10,7 @@ import {
 
 import { fetchVariacoes } from '../../api/variacoes'
 import { ExportPdfModal } from '../reports/ExportPdfModal'
+import { useAuth } from '../../hooks/useAuth'
 import { useDownloadPdf } from '../../hooks/useDownloadPdf'
 import type { Variacao } from '../../types/catalog'
 import { COLUNAS_CATALOGO } from '../../types/reports'
@@ -25,6 +26,8 @@ import 'ag-grid-community/styles/ag-grid.css'
 import 'ag-grid-community/styles/ag-theme-quartz.css'
 
 export function CatalogoGrid() {
+  const { user } = useAuth()
+  const nomeEmpresa = user?.empresa?.nome || ''
   const [searchText, setSearchText] = useState('')
   const [mostrarArquivados, setMostrarArquivados] = useState(false)
   const [isExportOpen, setIsExportOpen] = useState(false)
@@ -322,7 +325,7 @@ export function CatalogoGrid() {
       <ExportPdfModal
         isOpen={isExportOpen}
         onClose={() => setIsExportOpen(false)}
-        titulo="Exportar — Catálogo"
+        titulo={nomeEmpresa ? `Exportar — ${nomeEmpresa} Catálogo` : 'Exportar — Catálogo'}
         colunasDisponiveis={COLUNAS_CATALOGO}
         onConfirm={handleExport}
         isDownloading={isDownloading}

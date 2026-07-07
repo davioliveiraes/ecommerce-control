@@ -5,14 +5,14 @@
 ![status](https://img.shields.io/badge/status-portf%C3%B3lio-black?style=flat-square) ![stack](https://img.shields.io/badge/stack-Django%20%2B%20React-black?style=flat-square) ![tenancy](https://img.shields.io/badge/multi--tenant-por%20empresa-black?style=flat-square)
 
 <details>
-<summary><strong>🌙 Ver tema dark</strong></summary>
+<summary><strong>Ver tema dark</strong></summary>
 
 ![Login — tema dark](docs/screenshots/01-login-dark.png)
 
 </details>
 
 <details>
-<summary><strong>☀️ Ver tema light</strong></summary>
+<summary><strong>Ver tema light</strong></summary>
 
 ![Login — tema light](docs/screenshots/01-login-light.png)
 

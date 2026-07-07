@@ -6,7 +6,8 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   titulo: string
-  colunasDisponiveis: ColunaRelatorio[]
+  colunasDisponiveis?: ColunaRelatorio[]
+  filtrosTitulo?: string
   filtrosExtras?: ReactNode
   onConfirm: (colunasSelecionadas: string[]) => Promise<void>
   isDownloading: boolean
@@ -16,7 +17,8 @@ export function ExportPdfModal({
   isOpen,
   onClose,
   titulo,
-  colunasDisponiveis,
+  colunasDisponiveis = [],
+  filtrosTitulo = 'Filtros',
   filtrosExtras,
   onConfirm,
   isDownloading,
@@ -43,8 +45,10 @@ export function ExportPdfModal({
     setColunasSelecionadas(proximo)
   }
 
+  const temColunas = colunasDisponiveis.length > 0
+
   const handleConfirm = async () => {
-    if (colunasSelecionadas.size === 0) {
+    if (temColunas && colunasSelecionadas.size === 0) {
       window.alert('Selecione pelo menos uma coluna.')
       return
     }
@@ -76,34 +80,38 @@ export function ExportPdfModal({
         </div>
 
         {filtrosExtras && (
-          <div className="border-b border-gray-200 px-6 py-4">
-            <h3 className="mb-3 text-sm font-medium text-black">Filtros</h3>
+          <div className={`px-6 py-4 ${temColunas ? 'border-b border-gray-200' : ''}`}>
+            <h3 className="mb-3 text-sm font-medium text-black">
+              {filtrosTitulo}
+            </h3>
             {filtrosExtras}
           </div>
         )}
 
-        <div className="px-6 py-4">
-          <h3 className="mb-3 text-sm font-medium text-black">
-            Colunas no relatório ({colunasSelecionadas.size} selecionada
-            {colunasSelecionadas.size === 1 ? '' : 's'})
-          </h3>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {colunasDisponiveis.map((coluna) => (
-              <label
-                key={coluna.chave}
-                className="flex min-h-10 cursor-pointer items-center gap-2 border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:border-black hover:bg-gray-50 transition-colors"
-              >
-                <input
-                  type="checkbox"
-                  checked={colunasSelecionadas.has(coluna.chave)}
-                  onChange={() => toggleColuna(coluna.chave)}
-                  className="accent-black"
-                />
-                <span>{coluna.label}</span>
-              </label>
-            ))}
+        {temColunas && (
+          <div className="px-6 py-4">
+            <h3 className="mb-3 text-sm font-medium text-black">
+              Colunas no relatório ({colunasSelecionadas.size} selecionada
+              {colunasSelecionadas.size === 1 ? '' : 's'})
+            </h3>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {colunasDisponiveis.map((coluna) => (
+                <label
+                  key={coluna.chave}
+                  className="flex min-h-10 cursor-pointer items-center gap-2 border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:border-black hover:bg-gray-50 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={colunasSelecionadas.has(coluna.chave)}
+                    onChange={() => toggleColuna(coluna.chave)}
+                    className="accent-black"
+                  />
+                  <span>{coluna.label}</span>
+                </label>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex justify-end gap-2 border-t border-gray-200 px-6 py-4">
           <button
@@ -117,7 +125,7 @@ export function ExportPdfModal({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={isDownloading || colunasSelecionadas.size === 0}
+            disabled={isDownloading || (temColunas && colunasSelecionadas.size === 0)}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm border border-black bg-black text-white hover:bg-gray-900 hover:border-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <IconDownload />

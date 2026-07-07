@@ -10,10 +10,12 @@ import { FinanceiroFiltros } from '../components/finance-dashboard/FinanceiroFil
 import { KpiCards } from '../components/finance-dashboard/KpiCards'
 import { TimelineChart } from '../components/finance-dashboard/TimelineChart'
 import { VisaoGeralTab } from '../components/finance-dashboard/VisaoGeralTab'
+import { ExportPdfModal } from '../components/reports/ExportPdfModal'
 import { useAuth } from '../hooks/useAuth'
 import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import { useDownloadPdf } from '../hooks/useDownloadPdf'
 import {
+  MESES_PT,
   formatDateBR,
   getAnosDisponiveis,
   intervaloDoAno,
@@ -77,37 +79,59 @@ export function FinancePage() {
   // Parâmetros de exportação do Financeiro, reportados pelo FinanceiroTab, para
   // que o botão "Exportar Relatório" do cabeçalho funcione também nessa aba.
   const [financeiroExport, setFinanceiroExport] = useState<{
-    dataInicio: string
-    dataFim: string
+    ano: number
+    mes: number | null
     categoriaId: number | null
   } | null>(null)
 
   const { download, isDownloading } = useDownloadPdf()
 
-  const handleExport = async () => {
+  // Período escolhido no modal de exportação (independente do filtro da tela;
+  // abre pré-preenchido com o filtro atual da aba ativa).
+  const [isExportOpen, setIsExportOpen] = useState(false)
+  const [exportAno, setExportAno] = useState(() => hoje.getFullYear())
+  const [exportMes, setExportMes] = useState<number | null>(null)
+
+  const handleExportConfirm = async () => {
+    const intervalo =
+      exportMes === null
+        ? intervaloDoAno(exportAno)
+        : intervaloDoMes(exportAno, exportMes)
+    const sufixo = `${intervalo.dataInicio || 'inicio'}_${intervalo.dataFim || 'hoje'}`
+
     if (activeTab === 'visao_geral') {
       await download(
         '/reports/visao-geral/pdf',
         {
-          data_inicio: dataInicio || undefined,
-          data_fim: dataFim || undefined,
+          data_inicio: intervalo.dataInicio || undefined,
+          data_fim: intervalo.dataFim || undefined,
         },
-        `visao-geral-${dataInicio || 'inicio'}_${dataFim || 'hoje'}.pdf`,
+        `visao-geral-${sufixo}.pdf`,
       )
-      return
-    }
-
-    if (financeiroExport) {
+    } else {
       await download(
         '/reports/finance/dashboard/pdf',
         {
-          data_inicio: financeiroExport.dataInicio || undefined,
-          data_fim: financeiroExport.dataFim || undefined,
-          categoria_id: financeiroExport.categoriaId ?? undefined,
+          data_inicio: intervalo.dataInicio || undefined,
+          data_fim: intervalo.dataFim || undefined,
+          categoria_id: financeiroExport?.categoriaId ?? undefined,
         },
-        `financeiro-${financeiroExport.dataInicio || 'inicio'}_${financeiroExport.dataFim || 'hoje'}.pdf`,
+        `financeiro-${sufixo}.pdf`,
       )
     }
+    setIsExportOpen(false)
+  }
+
+  const handleExport = () => {
+    // Abre o modal pré-preenchido com o filtro de período da aba ativa.
+    if (activeTab === 'visao_geral') {
+      setExportAno(ano)
+      setExportMes(mes)
+    } else {
+      setExportAno(financeiroExport?.ano ?? hoje.getFullYear())
+      setExportMes(financeiroExport?.mes ?? null)
+    }
+    setIsExportOpen(true)
   }
 
   return (
@@ -163,6 +187,91 @@ export function FinancePage() {
           onExportParamsChange={setFinanceiroExport}
         />
       )}
+
+      <ExportPdfModal
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+        titulo={
+          activeTab === 'visao_geral'
+            ? 'Exportar — Visão Geral'
+            : 'Exportar — Finanças Gerais'
+        }
+        filtrosTitulo="Período do relatório"
+        filtrosExtras={
+          <PeriodoRelatorioFields
+            ano={exportAno}
+            mes={exportMes}
+            anos={anosDisponiveis}
+            onAnoChange={setExportAno}
+            onMesChange={setExportMes}
+          />
+        }
+        onConfirm={handleExportConfirm}
+        isDownloading={isDownloading}
+      />
+    </div>
+  )
+}
+
+interface PeriodoRelatorioFieldsProps {
+  ano: number
+  /** mes = 0-11, ou null para "Ano todo". */
+  mes: number | null
+  anos: number[]
+  onAnoChange: (ano: number) => void
+  onMesChange: (mes: number | null) => void
+}
+
+function PeriodoRelatorioFields({
+  ano,
+  mes,
+  anos,
+  onAnoChange,
+  onMesChange,
+}: PeriodoRelatorioFieldsProps) {
+  const selectClass =
+    'w-full px-3 py-1.5 text-sm border border-gray-200 bg-white focus:outline-none focus:border-black transition-colors font-mono'
+
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div>
+        <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
+          Mês
+        </label>
+        <select
+          value={mes === null ? 'all' : String(mes)}
+          onChange={(event) =>
+            onMesChange(
+              event.target.value === 'all' ? null : Number(event.target.value),
+            )
+          }
+          className={selectClass}
+        >
+          <option value="all">Ano todo</option>
+          {MESES_PT.map((nome, index) => (
+            <option key={nome} value={index}>
+              {nome}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block font-mono text-xs uppercase tracking-wider text-gray-600 mb-1.5">
+          Ano
+        </label>
+        <select
+          value={String(ano)}
+          onChange={(event) => onAnoChange(Number(event.target.value))}
+          className={selectClass}
+        >
+          {anos.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
     </div>
   )
 }
@@ -215,8 +324,8 @@ function FinancePageHeader({ onExport, isExporting }: FinancePageHeaderProps) {
 interface FinanceiroTabProps {
   onUltimaAtualizacaoChange: (value: string | null) => void
   onExportParamsChange: (params: {
-    dataInicio: string
-    dataFim: string
+    ano: number
+    mes: number | null
     categoriaId: number | null
   }) => void
 }
@@ -275,8 +384,8 @@ function FinanceiroTab({
 
   // Reporta os parâmetros de exportação para o botão do cabeçalho.
   useEffect(() => {
-    onExportParamsChange({ dataInicio, dataFim, categoriaId })
-  }, [dataInicio, dataFim, categoriaId, onExportParamsChange])
+    onExportParamsChange({ ano, mes, categoriaId })
+  }, [ano, mes, categoriaId, onExportParamsChange])
 
   const handleCategoriaChange = (
     nextCategoriaId: number | null,

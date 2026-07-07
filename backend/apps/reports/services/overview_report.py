@@ -1,26 +1,30 @@
-"""Relatório PDF da Visão Geral (desempenho da loja) no layout rico."""
+"""Relatório PDF da Visão Geral (layout rico, paleta preto e branco)."""
 
 from datetime import date
 from decimal import Decimal
 from typing import Optional
 
 from django.utils import timezone
+from reportlab.lib import colors
 
 from finance.models import VisaoGeralPeriodo
 
 from .report_design import (
-    GREEN,
-    NAVY,
-    NAVY_SOFT,
-    ORANGE,
-    PURPLE,
-    PURPLE_SOFT,
+    SOFT_BG,
     RichReport,
     fmt_brl,
     fmt_int,
     fmt_pct,
     ratio_pct,
 )
+
+# Paleta monocromática — segue o padrão preto/branco do painel
+PRETO = colors.HexColor("#111111")
+PRETO_BANNER = colors.HexColor("#0A0A0A")
+CINZA_BANNER = colors.HexColor("#2E2E2E")
+CINZA_ESCURO = colors.HexColor("#3F3F46")
+CINZA_MEDIO = colors.HexColor("#52525B")
+CINZA_CLARO = colors.HexColor("#71717A")
 
 
 def _label_periodo(data_inicio: Optional[date], data_fim: Optional[date]) -> str:
@@ -74,45 +78,71 @@ def gerar_relatorio_visao_geral(
     ticket = receita / vendas if vendas else 0.0
     visitas = t["visitas"] or 0
 
-    r = RichReport()
+    # --- montagem ------------------------------------------------------------
+    r = RichReport(accent=PRETO, banner_bg=PRETO_BANNER, banner_soft=CINZA_BANNER)
     agora = timezone.localtime()
+    r.set_page_footer(f"Controle Interno · {empresa.nome}")
 
-    # --- Página 1: cabeçalho + KPIs ---
     r.header_band(
         wordmark=empresa.nome,
-        kicker="RELATÓRIO DE DESEMPENHO — LOJA VIRTUAL",
-        title="Visão geral da loja",
+        kicker=f"{empresa.nome} Ecommerce Control · Relatório de desempenho".upper(),
+        title="Visão geral",
         subtitle="Panorama do comportamento de visitantes e do funil de conversão "
         "no período selecionado.",
-        badge=f"PERÍODO · {len(periodos)} REGISTRO(S)",
+        badge=f"VISÃO GERAL · {agora.strftime('%d/%m/%Y')}",
         meta_lines=[
+            "Módulo 02 · Visão geral",
             f"Período: <b>{_label_periodo(data_inicio, data_fim)}</b>",
-            f"Gerado em: <b>{agora.strftime('%d/%m/%Y %H:%M')}</b>",
-            "Base: data de criação do pedido",
+            f"Gerado em: <b>{agora.strftime('%d/%m/%Y')} às {agora.strftime('%H:%M')}</b>",
         ],
     )
 
+    r.section("Visão geral")
+    r.box_text(
+        f"Este relatório consolida os números da loja virtual {empresa.nome} "
+        "registrados a partir do painel da NuvemShop, com leitura do funil de "
+        "conversão, do comportamento dos visitantes e das taxas de conversão do período."
+    )
+
+    r.section("Filtros aplicados")
+    r.filters_box(
+        [
+            ("Período", _label_periodo(data_inicio, data_fim)),
+            ("Registros no recorte", f"{len(periodos)}"),
+            ("Base", "Painel Visão geral (NuvemShop)"),
+        ]
+    )
+
     if not periodos:
-        r.section("Sem dados no período")
         r.note(
             "Nenhum período da Visão Geral foi encontrado para o intervalo selecionado. "
-            "Cadastre os números a partir dos relatórios da NuvemShop para gerar este relatório."
+            "Cadastre os números a partir dos relatórios da NuvemShop para gerar este relatório.",
+            accent=PRETO,
         )
         return r.gerar()
 
     r.section("Indicadores do período")
     r.kpi_cards(
         [
-            ("Visitas", fmt_int(visitas), NAVY),
-            ("Vendas", fmt_int(vendas), ORANGE),
-            ("Receita", fmt_brl(receita), ORANGE),
-            ("Ticket médio", fmt_brl(ticket), PURPLE),
+            ("Visitas", fmt_int(visitas), PRETO),
+            ("Vendas", fmt_int(vendas), PRETO),
+            ("Receita", fmt_brl(receita), PRETO),
+            ("Ticket médio", fmt_brl(ticket), PRETO),
+        ]
+    )
+    r.stat_cards(
+        [
+            ("Vis. de categoria", fmt_int(t["vis_cat"])),
+            ("Vis. de produto", fmt_int(t["vis_prod"])),
+            ("Carrinhos criados", fmt_int(t["carrinhos"])),
+            ("Checkouts iniciados", fmt_int(t["checkout_iniciado"])),
+            ("Pedidos criados", fmt_int(t["pedidos_criados"])),
         ]
     )
 
     r.page_break()
 
-    # --- Página 2: funil + comportamento ---
+    # --- página 2: funil + comportamento ---
     r.section("Funil de conversão — da visita ao pedido pago")
 
     def passo(label, sub, valor, base_pct, pct_sub, cor):
@@ -128,14 +158,14 @@ def gerar_relatorio_visao_geral(
 
     r.funnel(
         [
-            passo("Visitas", "Entrada no site", visitas, visitas, "das visitas", NAVY),
-            passo("Visualização de categoria", "", t["vis_cat"], visitas, "das visitas", NAVY_SOFT),
-            passo("Visualização de produto", "", t["vis_prod"], visitas, "das visitas", PURPLE_SOFT),
-            passo("Carrinhos criados", "", t["carrinhos"], t["vis_prod"], "de quem viu produto", PURPLE),
-            passo("Checkout iniciado", "", t["checkout_iniciado"], t["carrinhos"], "dos carrinhos", ORANGE),
-            passo("Etapa de entrega", "", t["checkout_entrega"], t["checkout_iniciado"], "dos checkouts", ORANGE),
-            passo("Etapa de pagamento", "", t["checkout_pagamento"], t["checkout_entrega"], "da etapa de entrega", ORANGE),
-            passo("Pedidos pagos", "", vendas, visitas, "das visitas", GREEN),
+            passo("Visitas", "Entrada no site", visitas, visitas, "das visitas", PRETO),
+            passo("Visualização de categoria", "", t["vis_cat"], visitas, "das visitas", CINZA_ESCURO),
+            passo("Visualização de produto", "", t["vis_prod"], visitas, "das visitas", CINZA_ESCURO),
+            passo("Carrinhos criados", "", t["carrinhos"], t["vis_prod"], "de quem viu produto", CINZA_MEDIO),
+            passo("Checkout iniciado", "", t["checkout_iniciado"], t["carrinhos"], "dos carrinhos", CINZA_CLARO),
+            passo("Etapa de entrega", "", t["checkout_entrega"], t["checkout_iniciado"], "dos checkouts", CINZA_CLARO),
+            passo("Etapa de pagamento", "", t["checkout_pagamento"], t["checkout_entrega"], "da etapa de entrega", CINZA_CLARO),
+            passo("Pedidos pagos", "", vendas, visitas, "das visitas", PRETO),
         ]
     )
 
@@ -152,9 +182,11 @@ def gerar_relatorio_visao_geral(
         de, para, base, fim = min(etapas_validas, key=lambda e: e[3] / e[2])
         perdidos = base - fim
         r.callout(
-            f"Maior vazamento: entre <b>{de} ({fmt_int(base)})</b> e <b>{para} ({fmt_int(fim)})</b>, "
+            f"Maior vazamento: entre {de} ({fmt_int(base)}) e {para} ({fmt_int(fim)}), "
             f"{fmt_int(perdidos)} abandonaram — apenas {fmt_pct(ratio_pct(fim, base))} avançaram. "
-            "Vale priorizar essa etapa para destravar conversão."
+            "Vale priorizar essa etapa para destravar conversão.",
+            accent=PRETO,
+            bg=SOFT_BG,
         )
 
     r.section("Comportamento detalhado")
@@ -178,7 +210,7 @@ def gerar_relatorio_visao_geral(
 
     r.page_break()
 
-    # --- Página 3: taxas de conversão + leituras ---
+    # --- página 3: taxas de conversão + leituras ---
     conv_visitas_vendas = ratio_pct(vendas, visitas)
     conv_visitas_carrinhos = ratio_pct(t["carrinhos"], visitas)
     conv_checkouts_vendas = ratio_pct(vendas, t["checkout_iniciado"])
@@ -189,12 +221,14 @@ def gerar_relatorio_visao_geral(
             (fmt_pct(conv_visitas_vendas), "Visitas a vendas", "Conversão geral do site"),
             (fmt_pct(conv_visitas_carrinhos), "Visitas a carrinhos", "Intenção de compra gerada"),
             (fmt_pct(conv_checkouts_vendas), "Checkouts a vendas", "Eficiência do checkout"),
-        ]
+        ],
+        accent=PRETO,
     )
     r.note(
         "As taxas acima são consolidadas a partir dos relatórios da NuvemShop e podem usar "
         "bases (sessões únicas) distintas das contagens absolutas do funil — por isso pode "
-        "haver pequena divergência em relação aos percentuais calculados sobre as visitas."
+        "haver pequena divergência em relação aos percentuais calculados sobre as visitas.",
+        accent=PRETO,
     )
 
     r.section("Principais leituras")
@@ -219,12 +253,13 @@ def gerar_relatorio_visao_geral(
                 "Volume e ticket.",
                 f"{fmt_int(vendas)} vendas, {fmt_brl(receita)} de receita e ticket médio de {fmt_brl(ticket)} no período.",
             ),
-        ]
+        ],
+        accent=PRETO,
     )
 
     r.page_break()
 
-    # --- Página 4: recomendações + rodapé ---
+    # --- página 4: recomendações + detalhamento dos períodos ---
     r.section("Recomendações")
     r.numbered_list(
         [
@@ -240,17 +275,36 @@ def gerar_relatorio_visao_geral(
                 "Acionar recuperação de checkout abandonado.",
                 "Use os templates transacionais para resgatar carrinhos e checkouts não concluídos.",
             ),
-            (
-                "Acompanhar a série ao longo do tempo.",
-                "Com amostras pequenas os percentuais variam bastante; só a série de vários períodos separa tendência de ruído.",
-            ),
         ],
-        accent=PURPLE,
+        accent=PRETO,
     )
 
-    r.footer_note(
-        f"Relatório interno · {empresa.nome} — Loja virtual (NuvemShop)",
-        f"Gerado a partir do painel “Visão geral” · {agora.strftime('%d/%m/%Y %H:%M')}",
+    r.section("Detalhamento dos períodos")
+    # Resumo antes da tabela: se ela quebrar de página, os totais não ficam
+    # órfãos em uma página quase vazia.
+    r.filters_box(
+        [
+            ("Períodos no recorte", f"{len(periodos)}"),
+            ("Receita total", fmt_brl(receita)),
+        ]
+    )
+    linhas = [
+        [
+            f"{p.data_inicio.strftime('%d/%m/%Y')} – {p.data_fim.strftime('%d/%m/%Y')}",
+            fmt_int(p.visitas),
+            fmt_int(p.carrinhos_criados),
+            fmt_int(p.checkout_iniciado),
+            fmt_int(p.pedidos_pagos),
+            fmt_brl(p.receita),
+            fmt_brl(p.ticket_medio),
+        ]
+        for p in reversed(periodos)
+    ]
+    r.data_table(
+        ["Período", "Visitas", "Carrinhos", "Checkouts", "Pedidos pagos", "Receita", "Ticket médio"],
+        linhas,
+        fracs=[2.2, 1.0, 1.0, 1.0, 1.2, 1.3, 1.2],
+        aligns=["L", "R", "R", "R", "R", "R", "R"],
     )
 
     return r.gerar()
