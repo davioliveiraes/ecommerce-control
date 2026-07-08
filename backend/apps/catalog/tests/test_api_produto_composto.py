@@ -35,7 +35,7 @@ class ProdutoComVariacoesTestCase(TestCase):
             "nome_site": "",
             "descricao_produto_gestaoclick": "FONE TESTE GC",
             "descricao_produto_site": "FONE TESTE",
-            "marca_id": None,
+            "categoria_id": None,
             "subcategoria_id": None,
             "variacoes": [],
         }

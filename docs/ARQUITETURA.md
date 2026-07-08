@@ -17,7 +17,7 @@ Browser (React SPA) ──fetch + Bearer token──▶ Django + Ninja (/api/*) 
 | App | Responsabilidade |
 |---|---|
 | `accounts` | `Empresa` (o tenant), CNPJ, onboarding e helpers de tenancy. |
-| `catalog` | Marcas, categorias, produtos, variações (SKU/EAN). |
+| `catalog` | Categorias, subcategorias, produtos, variações (SKU/EAN). |
 | `finance` | Categorias financeiras, lançamentos, visão geral, dashboards. |
 | `importer` | Importação de catálogo via planilha (xlsx). |
 | `reports` | PDFs com ReportLab — sem modelos próprios. |
@@ -44,7 +44,7 @@ Regra de ouro (`accounts/tenancy.py`): todo endpoint de dados chama `empresa_do_
 ### Modelos
 
 ```
-Empresa ─┬─ Marca / Categoria ── Subcategoria
+Empresa ─┬─ Categoria ── Subcategoria
          ├─ Produto ── Variação (SKU, margens calculadas em properties)
          ├─ CategoriaFinanceira ── LancamentoFinanceiro
          └─ VisaoGeralPeriodo (funil manual da loja)

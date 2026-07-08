@@ -8,7 +8,7 @@ from ninja.errors import HttpError
 
 from accounts.models import Empresa
 from accounts.tenancy import empresa_do_usuario
-from catalog.models import Marca, Produto, Subcategoria, Variacao
+from catalog.models import Categoria, Produto, Subcategoria, Variacao
 from catalog.schemas import (
     ProdutoIn,
     ProdutoOut,
@@ -22,18 +22,25 @@ router = Router(tags=["produtos"])
 
 def _validar_referencias(
     empresa: Empresa,
-    marca_id: Optional[int],
+    categoria_id: Optional[int],
     subcategoria_id: Optional[int],
 ) -> None:
-    """Garante que marca/subcategoria referenciadas pertencem à empresa."""
-    if marca_id is not None and not Marca.objects.filter(
-        id=marca_id, empresa=empresa
+    """Garante que categoria/subcategoria referenciadas pertencem à empresa
+    e que a subcategoria, quando informada, pertence à categoria escolhida."""
+    if categoria_id is not None and not Categoria.objects.filter(
+        id=categoria_id, empresa=empresa
     ).exists():
-        raise HttpError(400, "Marca não encontrada para esta empresa.")
-    if subcategoria_id is not None and not Subcategoria.objects.filter(
-        id=subcategoria_id, empresa=empresa
-    ).exists():
-        raise HttpError(400, "Subcategoria não encontrada para esta empresa.")
+        raise HttpError(400, "Categoria não encontrada para esta empresa.")
+    if subcategoria_id is not None:
+        subcategoria = Subcategoria.objects.filter(
+            id=subcategoria_id, empresa=empresa
+        ).first()
+        if subcategoria is None:
+            raise HttpError(400, "Subcategoria não encontrada para esta empresa.")
+        if categoria_id is not None and subcategoria.categoria_id != categoria_id:
+            raise HttpError(
+                400, "Subcategoria não pertence à categoria selecionada."
+            )
 
 
 @router.get("/", response=List[ProdutoOut])
@@ -44,7 +51,7 @@ def list_produtos(request, inativos: bool = False, q: str = ""):
     - ?inativos=true: inclui inativos
     - ?q=texto: busca em descricao_produto_site e descricao_produto_gestaoclick
     """
-    qs = Produto.objects.select_related("marca", "subcategoria").filter(
+    qs = Produto.objects.select_related("categoria", "subcategoria").filter(
         empresa=empresa_do_usuario(request)
     )
     if not inativos:
@@ -85,7 +92,7 @@ def create_produto_com_variacoes(request, payload: ProdutoComVariacoesIn):
     if len(skus_no_payload) != len(set(skus_no_payload)):
         return 400, {"detail": "SKU duplicado no payload."}
 
-    _validar_referencias(empresa, payload.marca_id, payload.subcategoria_id)
+    _validar_referencias(empresa, payload.categoria_id, payload.subcategoria_id)
 
     with transaction.atomic():
         produto = Produto.objects.create(
@@ -94,7 +101,7 @@ def create_produto_com_variacoes(request, payload: ProdutoComVariacoesIn):
             nome_site=payload.nome_site,
             descricao_produto_gestaoclick=payload.descricao_produto_gestaoclick,
             descricao_produto_site=payload.descricao_produto_site,
-            marca_id=payload.marca_id,
+            categoria_id=payload.categoria_id,
             subcategoria_id=payload.subcategoria_id,
         )
 
@@ -115,7 +122,7 @@ def create_produto_com_variacoes(request, payload: ProdutoComVariacoesIn):
             )
 
     produto_serializado = (
-        Produto.objects.select_related("marca", "subcategoria").get(id=produto.id)
+        Produto.objects.select_related("categoria", "subcategoria").get(id=produto.id)
     )
     variacoes = produto.variacoes.select_related("produto").order_by("id")
 
@@ -128,7 +135,7 @@ def create_produto_com_variacoes(request, payload: ProdutoComVariacoesIn):
 @router.get("/{produto_id}", response=ProdutoOut)
 def get_produto(request, produto_id: int):
     return get_object_or_404(
-        Produto.objects.select_related("marca", "subcategoria"),
+        Produto.objects.select_related("categoria", "subcategoria"),
         id=produto_id,
         empresa=empresa_do_usuario(request),
     )
@@ -138,7 +145,7 @@ def get_produto(request, produto_id: int):
 def create_produto(request, payload: ProdutoIn):
     empresa = empresa_do_usuario(request)
     data = payload.dict()
-    _validar_referencias(empresa, data.get("marca_id"), data.get("subcategoria_id"))
+    _validar_referencias(empresa, data.get("categoria_id"), data.get("subcategoria_id"))
     produto = Produto.objects.create(empresa=empresa, **data)
     return 201, produto
 
@@ -148,7 +155,7 @@ def update_produto(request, produto_id: int, payload: ProdutoIn):
     empresa = empresa_do_usuario(request)
     produto = get_object_or_404(Produto, id=produto_id, empresa=empresa)
     data = payload.dict()
-    _validar_referencias(empresa, data.get("marca_id"), data.get("subcategoria_id"))
+    _validar_referencias(empresa, data.get("categoria_id"), data.get("subcategoria_id"))
     for field, value in data.items():
         setattr(produto, field, value)
     produto.save()
@@ -160,7 +167,7 @@ def patch_produto(request, produto_id: int, payload: ProdutoPatch):
     empresa = empresa_do_usuario(request)
     produto = get_object_or_404(Produto, id=produto_id, empresa=empresa)
     data = payload.dict(exclude_unset=True)
-    _validar_referencias(empresa, data.get("marca_id"), data.get("subcategoria_id"))
+    _validar_referencias(empresa, data.get("categoria_id"), data.get("subcategoria_id"))
     for field, value in data.items():
         setattr(produto, field, value)
     produto.save()
@@ -219,7 +226,7 @@ def update_produto_com_variacoes(
     if len(skus_no_payload) != len(set(skus_no_payload)):
         return 400, {"detail": "SKU duplicado no payload."}
 
-    _validar_referencias(empresa, payload.marca_id, payload.subcategoria_id)
+    _validar_referencias(empresa, payload.categoria_id, payload.subcategoria_id)
 
     ids_no_payload = {v.id for v in payload.variacoes if v.id is not None}
     if ids_no_payload:
@@ -240,7 +247,7 @@ def update_produto_com_variacoes(
         produto.nome_site = payload.nome_site
         produto.descricao_produto_gestaoclick = payload.descricao_produto_gestaoclick
         produto.descricao_produto_site = payload.descricao_produto_site
-        produto.marca_id = payload.marca_id
+        produto.categoria_id = payload.categoria_id
         produto.subcategoria_id = payload.subcategoria_id
         produto.save()
 
@@ -264,7 +271,7 @@ def update_produto_com_variacoes(
                 Variacao.objects.filter(id=v_payload.id).update(**campos)
 
     produto_serializado = (
-        Produto.objects.select_related("marca", "subcategoria").get(id=produto.id)
+        Produto.objects.select_related("categoria", "subcategoria").get(id=produto.id)
     )
     variacoes = produto.variacoes.select_related("produto").order_by("id")
 

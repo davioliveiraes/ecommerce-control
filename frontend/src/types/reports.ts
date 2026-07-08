@@ -17,7 +17,7 @@ export const COLUNAS_CATALOGO: ColunaRelatorio[] = [
     selecionadaPorPadrao: false,
   },
   { chave: 'variacao', label: 'Variação', selecionadaPorPadrao: true },
-  { chave: 'marca', label: 'Marca', selecionadaPorPadrao: false },
+  { chave: 'categoria', label: 'Categoria', selecionadaPorPadrao: false },
   { chave: 'subcategoria', label: 'Subcategoria', selecionadaPorPadrao: false },
   { chave: 'custo', label: 'Custo', selecionadaPorPadrao: false },
   { chave: 'preco_loja', label: 'Preço Loja', selecionadaPorPadrao: false },

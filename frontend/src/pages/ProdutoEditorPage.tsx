@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 
 import { fetchProduto, saveProdutoComVariacoes } from '../api/produtos'
 import { fetchVariacoesPorProduto } from '../api/variacoes'
-import { fetchMarcas } from '../api/marcas'
+import { fetchCategorias } from '../api/categorias'
 import { fetchSubcategorias } from '../api/subcategorias'
 import {
   produtoEditorSchema,
@@ -44,7 +44,10 @@ export function ProdutoEditorPage() {
     enabled: !!isValidId,
   })
 
-  const marcasQuery = useQuery({ queryKey: ['marcas'], queryFn: fetchMarcas })
+  const categoriasQuery = useQuery({
+    queryKey: ['categorias'],
+    queryFn: fetchCategorias,
+  })
   const subcategoriasQuery = useQuery({
     queryKey: ['subcategorias'],
     queryFn: fetchSubcategorias,
@@ -57,7 +60,7 @@ export function ProdutoEditorPage() {
       nome_site: '',
       descricao_produto_gestaoclick: '',
       descricao_produto_site: '',
-      marca_id: null,
+      categoria_id: null,
       subcategoria_id: null,
       variacoes: [],
     },
@@ -77,7 +80,7 @@ export function ProdutoEditorPage() {
         descricao_produto_gestaoclick:
           produtoQuery.data.descricao_produto_gestaoclick,
         descricao_produto_site: produtoQuery.data.descricao_produto_site,
-        marca_id: produtoQuery.data.marca_id,
+        categoria_id: produtoQuery.data.categoria_id,
         subcategoria_id: produtoQuery.data.subcategoria_id,
         variacoes: variacoesQuery.data.map((v) => ({
           id: v.id,
@@ -235,7 +238,7 @@ export function ProdutoEditorPage() {
         )}
 
         <ProdutoSection
-          marcas={marcasQuery.data || []}
+          categorias={categoriasQuery.data || []}
           subcategorias={subcategoriasQuery.data || []}
         />
 

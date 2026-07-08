@@ -51,7 +51,7 @@ export const produtoEditorSchema = z.object({
   nome_site: z.string().max(255),
   descricao_produto_gestaoclick: z.string(),
   descricao_produto_site: z.string().min(1, 'Descrição do site é obrigatória'),
-  marca_id: z.number().nullable(),
+  categoria_id: z.number().nullable(),
   subcategoria_id: z.number().nullable(),
   variacoes: z
     .array(variacaoSchema)

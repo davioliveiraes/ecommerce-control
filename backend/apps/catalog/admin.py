@@ -1,14 +1,6 @@
 from django.contrib import admin
 
-from catalog.models import Marca, Categoria, Subcategoria, Produto, Variacao
-
-
-@admin.register(Marca)
-class MarcaAdmin(admin.ModelAdmin):
-    list_display = ("nome", "slug", "ativo", "criado_em")
-    list_filter = ("ativo",)
-    search_fields = ("nome", "slug")
-    prepopulated_fields = {"slug": ("nome",)}
+from catalog.models import Categoria, Subcategoria, Produto, Variacao
 
 
 @admin.register(Categoria)
@@ -41,10 +33,10 @@ class VariacaoInline(admin.TabularInline):
 
 @admin.register(Produto)
 class ProdutoAdmin(admin.ModelAdmin):
-    list_display = ("nome_site", "marca", "subcategoria", "ativo", "atualizado_em")
-    list_filter = ("ativo", "marca", "subcategoria")
+    list_display = ("nome_site", "categoria", "subcategoria", "ativo", "atualizado_em")
+    list_filter = ("ativo", "categoria", "subcategoria")
     search_fields = ("nome_site", "nome_gestaoclick")
-    autocomplete_fields = ("marca", "subcategoria")
+    autocomplete_fields = ("categoria", "subcategoria")
     inlines = [VariacaoInline]
 
 
@@ -56,7 +48,7 @@ class VariacaoAdmin(admin.ModelAdmin):
         "preco_promocional", "margem_promocional_percentual_display",
         "status_nuvemshop", "ativo",
     )
-    list_filter = ("ativo", "status_nuvemshop", "status_integracao", "produto__marca")
+    list_filter = ("ativo", "status_nuvemshop", "status_integracao", "produto__categoria")
     search_fields = (
         "sku_nuvemshop", "id_gestaoclick", "codigo_barras",
         "produto__nome_site", "produto__nome_gestaoclick",

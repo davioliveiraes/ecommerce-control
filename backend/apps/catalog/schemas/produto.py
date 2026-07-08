@@ -13,7 +13,7 @@ class ProdutoIn(Schema):
     nome_site: str = ""
     descricao_produto_gestaoclick: str = ""
     descricao_produto_site: str = ""
-    marca_id: Optional[int] = None
+    categoria_id: Optional[int] = None
     subcategoria_id: Optional[int] = None
 
 
@@ -24,8 +24,8 @@ class ProdutoOut(Schema):
     nome_site: str
     descricao_produto_gestaoclick: str
     descricao_produto_site: str
-    marca_id: Optional[int] = None
-    marca_nome: Optional[str] = None
+    categoria_id: Optional[int] = None
+    categoria_nome: Optional[str] = None
     subcategoria_id: Optional[int] = None
     subcategoria_nome: Optional[str] = None
     ativo: bool
@@ -33,8 +33,8 @@ class ProdutoOut(Schema):
     atualizado_em: datetime
 
     @staticmethod
-    def resolve_marca_nome(obj) -> Optional[str]:
-        return obj.marca.nome if obj.marca else None
+    def resolve_categoria_nome(obj) -> Optional[str]:
+        return obj.categoria.nome if obj.categoria else None
 
     @staticmethod
     def resolve_subcategoria_nome(obj) -> Optional[str]:
@@ -47,7 +47,7 @@ class ProdutoPatch(Schema):
     nome_site: Optional[str] = None
     descricao_produto_gestaoclick: Optional[str] = None
     descricao_produto_site: Optional[str] = None
-    marca_id: Optional[int] = None
+    categoria_id: Optional[int] = None
     subcategoria_id: Optional[int] = None
     ativo: Optional[bool] = None
 
@@ -78,7 +78,7 @@ class ProdutoComVariacoesIn(Schema):
     nome_site: str = ""
     descricao_produto_gestaoclick: str = ""
     descricao_produto_site: str
-    marca_id: Optional[int] = None
+    categoria_id: Optional[int] = None
     subcategoria_id: Optional[int] = None
     variacoes: List[VariacaoInComposto]
 

@@ -1,18 +1,43 @@
+import { useEffect } from 'react'
 import { useFormContext } from 'react-hook-form'
 
 import type { ProdutoEditorForm } from './schema'
-import type { Marca, Subcategoria } from '../../types/catalog'
+import type { Categoria, Subcategoria } from '../../types/catalog'
 
 interface Props {
-  marcas: Marca[]
+  categorias: Categoria[]
   subcategorias: Subcategoria[]
 }
 
-export function ProdutoSection({ marcas, subcategorias }: Props) {
+export function ProdutoSection({ categorias, subcategorias }: Props) {
   const {
     register,
+    watch,
+    setValue,
     formState: { errors },
   } = useFormContext<ProdutoEditorForm>()
+
+  const categoriaId = watch('categoria_id')
+  const subcategoriaId = watch('subcategoria_id')
+
+  // Subcategoria é opcional e sempre subordinada à categoria escolhida.
+  const subcategoriasDaCategoria =
+    categoriaId === null
+      ? subcategorias
+      : subcategorias.filter((s) => s.categoria_id === categoriaId)
+
+  // Se a categoria mudar e a subcategoria atual não pertencer a ela, limpa.
+  useEffect(() => {
+    if (
+      subcategoriaId !== null &&
+      categoriaId !== null &&
+      !subcategorias.some(
+        (s) => s.id === subcategoriaId && s.categoria_id === categoriaId,
+      )
+    ) {
+      setValue('subcategoria_id', null, { shouldDirty: true })
+    }
+  }, [categoriaId, subcategoriaId, subcategorias, setValue])
 
   return (
     <section className="border border-gray-200 bg-white p-6">
@@ -44,25 +69,25 @@ export function ProdutoSection({ marcas, subcategorias }: Props) {
         </div>
 
         <div>
-          <FieldLabel>Marca</FieldLabel>
+          <FieldLabel>Categoria</FieldLabel>
           <select
-            {...register('marca_id', {
+            {...register('categoria_id', {
               setValueAs: (v) =>
                 v === '' || v === null ? null : Number(v),
             })}
             className="form-input"
           >
-            <option value="">— Sem marca —</option>
-            {marcas.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.nome}
+            <option value="">— Sem categoria —</option>
+            {categorias.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.nome}
               </option>
             ))}
           </select>
         </div>
 
         <div>
-          <FieldLabel>Subcategoria</FieldLabel>
+          <FieldLabel>Subcategoria (opcional)</FieldLabel>
           <select
             {...register('subcategoria_id', {
               setValueAs: (v) =>
@@ -71,9 +96,9 @@ export function ProdutoSection({ marcas, subcategorias }: Props) {
             className="form-input"
           >
             <option value="">— Sem subcategoria —</option>
-            {subcategorias.map((s) => (
+            {subcategoriasDaCategoria.map((s) => (
               <option key={s.id} value={s.id}>
-                {s.categoria_nome} › {s.nome}
+                {categoriaId === null ? `${s.categoria_nome} › ${s.nome}` : s.nome}
               </option>
             ))}
           </select>

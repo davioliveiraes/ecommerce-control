@@ -38,13 +38,13 @@ class Produto(TimestampedModel, SoftDeleteModel):
         verbose_name="descrição do produto (site)",
         help_text="Descrição longa do produto no Nuvemshop.",
     )
-    marca = models.ForeignKey(
-        "catalog.Marca",
+    categoria = models.ForeignKey(
+        "catalog.Categoria",
         on_delete=models.PROTECT,
         related_name="produtos",
         null=True,
         blank=True,
-        verbose_name="marca",
+        verbose_name="categoria",
     )
     subcategoria = models.ForeignKey(
         "catalog.Subcategoria",

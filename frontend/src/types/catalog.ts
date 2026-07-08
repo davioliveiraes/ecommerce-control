@@ -24,13 +24,6 @@ export interface Variacao {
   atualizado_em: string
 }
 
-export interface Marca {
-  id: number
-  nome: string
-  slug: string
-  ativo: boolean
-}
-
 export interface Categoria {
   id: number
   nome: string
@@ -53,8 +46,8 @@ export interface Produto {
   nome_site: string
   descricao_produto_gestaoclick: string
   descricao_produto_site: string
-  marca_id: number | null
-  marca_nome: string | null
+  categoria_id: number | null
+  categoria_nome: string | null
   subcategoria_id: number | null
   subcategoria_nome: string | null
   ativo: boolean
@@ -82,7 +75,7 @@ export interface ProdutoComVariacoesPayload {
   nome_site: string
   descricao_produto_gestaoclick: string
   descricao_produto_site: string
-  marca_id: number | null
+  categoria_id: number | null
   subcategoria_id: number | null
   variacoes: VariacaoComposta[]
 }

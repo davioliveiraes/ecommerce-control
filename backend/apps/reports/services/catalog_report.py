@@ -8,7 +8,7 @@ from django.utils import timezone
 from reportlab.lib import colors
 
 from accounts.models import Empresa
-from catalog.models import Marca, Subcategoria, Variacao
+from catalog.models import Categoria, Subcategoria, Variacao
 
 from .report_design import RichReport, ratio_pct
 
@@ -49,7 +49,10 @@ COLUNAS_DISPONIVEIS = {
         lambda v: v.produto.descricao_produto_gestaoclick or "-",
     ),
     "variacao": ("Variação", lambda v: v.descricao or "-"),
-    "marca": ("Marca", lambda v: v.produto.marca.nome if v.produto.marca else "-"),
+    "categoria": (
+        "Categoria",
+        lambda v: v.produto.categoria.nome if v.produto.categoria else "-",
+    ),
     "subcategoria": (
         "Subcategoria",
         lambda v: v.produto.subcategoria.nome if v.produto.subcategoria else "-",
@@ -81,7 +84,7 @@ LAYOUT_COLUNAS = {
     "produto_descricao_site": (3.0, "L"),
     "produto_descricao_gestaoclick": (3.0, "L"),
     "variacao": (2.0, "L"),
-    "marca": (1.2, "L"),
+    "categoria": (1.5, "L"),
     "subcategoria": (1.5, "L"),
     "custo": (1.0, "R"),
     "preco_loja": (1.0, "R"),
@@ -98,7 +101,7 @@ def gerar_relatorio_catalogo(
     empresa: Empresa,
     colunas: list[str],
     incluir_inativos: bool = False,
-    marca_id: Optional[int] = None,
+    categoria_id: Optional[int] = None,
     subcategoria_id: Optional[int] = None,
     busca: str = "",
     apenas_promocional: bool = False,
@@ -108,12 +111,12 @@ def gerar_relatorio_catalogo(
         colunas_validas = COLUNAS_PADRAO
 
     qs = Variacao.objects.select_related(
-        "produto__marca", "produto__subcategoria"
+        "produto__categoria", "produto__subcategoria"
     ).filter(produto__empresa=empresa)
     if not incluir_inativos:
         qs = qs.filter(ativo=True)
-    if marca_id is not None:
-        qs = qs.filter(produto__marca_id=marca_id)
+    if categoria_id is not None:
+        qs = qs.filter(produto__categoria_id=categoria_id)
     if subcategoria_id is not None:
         qs = qs.filter(produto__subcategoria_id=subcategoria_id)
     if apenas_promocional:
@@ -131,10 +134,10 @@ def gerar_relatorio_catalogo(
     filtros = [("Status", "Ativos + inativos" if incluir_inativos else "Apenas ativos")]
     if apenas_promocional:
         filtros.append(("Promoção", "Apenas variações com preço promocional"))
-    if marca_id is not None:
-        marca = Marca.objects.filter(id=marca_id, empresa=empresa).first()
-        if marca:
-            filtros.append(("Marca", marca.nome))
+    if categoria_id is not None:
+        categoria = Categoria.objects.filter(id=categoria_id, empresa=empresa).first()
+        if categoria:
+            filtros.append(("Categoria", categoria.nome))
     if subcategoria_id is not None:
         subcategoria = Subcategoria.objects.filter(
             id=subcategoria_id, empresa=empresa
@@ -166,8 +169,9 @@ def gerar_relatorio_catalogo(
     nuvemshop_ativo = sum(1 for v in variacoes if v.status_nuvemshop == "ATIVO")
     integracao_ativa = sum(1 for v in variacoes if v.status_integracao == "ATIVO")
     integracao_inativa = total - integracao_ativa
-    marcas = Counter(
-        v.produto.marca.nome if v.produto.marca else "Sem marca" for v in variacoes
+    categorias = Counter(
+        v.produto.categoria.nome if v.produto.categoria else "Sem categoria"
+        for v in variacoes
     )
     subcategorias = Counter(
         v.produto.subcategoria.nome if v.produto.subcategoria else "Sem subcategoria"
@@ -216,7 +220,7 @@ def gerar_relatorio_catalogo(
             ("Margem média", format_percent(margem_media)),
             ("Com preço site", f"{len(precos_site)}"),
             ("Com preço promocional", f"{em_promocao}"),
-            ("Marcas", f"{len(marcas)}"),
+            ("Categorias", f"{len(categorias)}"),
             ("Subcategorias", f"{len(subcategorias)}"),
         ]
     )
@@ -248,18 +252,18 @@ def gerar_relatorio_catalogo(
     # --- página 2: agrupamentos, leituras e recomendações ---------------------
     r.section("Principais agrupamentos")
     r.two_panels(
+        "Por categoria",
+        [(label, f"{valor}") for label, valor in categorias.most_common(5)],
         "Por subcategoria",
         [(label, f"{valor}") for label, valor in subcategorias.most_common(5)],
-        "Por marca",
-        [(label, f"{valor}") for label, valor in marcas.most_common(5)],
     )
 
-    marca_lider, marca_lider_qtd = marcas.most_common(1)[0]
-    pct_marca_lider = ratio_pct(marca_lider_qtd, total)
+    categoria_lider, categoria_lider_qtd = categorias.most_common(1)[0]
+    pct_categoria_lider = ratio_pct(categoria_lider_qtd, total)
     concentracao = (
-        "Concentração alta aumenta a dependência de poucos fornecedores."
-        if pct_marca_lider >= 50
-        else "Distribuição relativamente equilibrada entre marcas."
+        "Concentração alta aumenta a dependência de uma única linha de produtos."
+        if pct_categoria_lider >= 50
+        else "Distribuição relativamente equilibrada entre categorias."
     )
 
     leituras = [
@@ -284,9 +288,9 @@ def gerar_relatorio_catalogo(
             f"{format_percent(margem_media)} entre as variações com dados.",
         ),
         (
-            "Concentração por marca.",
-            f"'{marca_lider}' lidera com {marca_lider_qtd} variações "
-            f"({format_percent(pct_marca_lider)} do recorte). {concentracao}",
+            "Concentração por categoria.",
+            f"'{categoria_lider}' lidera com {categoria_lider_qtd} variações "
+            f"({format_percent(pct_categoria_lider)} do recorte). {concentracao}",
         ),
         (
             "Integração GestãoClick–NuvemShop.",

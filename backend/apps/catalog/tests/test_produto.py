@@ -1,10 +1,9 @@
 from django.test import TestCase
-from catalog.models import Marca, Categoria, Subcategoria, Produto
+from catalog.models import Categoria, Subcategoria, Produto
 
 
 class ProdutoTestCase(TestCase):
     def setUp(self):
-        self.marca = Marca.objects.create(nome="GET", slug="get")
         self.categoria = Categoria.objects.create(nome="Fones", slug="fones")
         self.subcategoria = Subcategoria.objects.create(
             nome="TWS", slug="tws", categoria=self.categoria,
@@ -14,15 +13,15 @@ class ProdutoTestCase(TestCase):
         produto = Produto.objects.create(
             nome_gestaoclick="FONE GET BUDS LITE",
             nome_site="FONE DE OUVIDO TWS BLUETOOTH BUDS LITE GET",
-            marca=self.marca,
+            categoria=self.categoria,
             subcategoria=self.subcategoria,
         )
         self.assertEqual(str(produto), "FONE DE OUVIDO TWS BLUETOOTH BUDS LITE GET")
 
-    def test_sem_marca_e_subcategoria(self):
+    def test_sem_categoria_e_subcategoria(self):
         produto = Produto.objects.create(
             nome_gestaoclick="TESTE",
             nome_site="TESTE PRODUTO",
         )
-        self.assertIsNone(produto.marca)
+        self.assertIsNone(produto.categoria)
         self.assertIsNone(produto.subcategoria)

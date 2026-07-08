@@ -3,7 +3,6 @@ from ninja import NinjaAPI
 from .auth import auth
 from .auth_router import router as auth_router
 from catalog.routers import (
-    marca_router,
     categoria_router,
     subcategoria_router,
     produto_router,
@@ -36,7 +35,6 @@ def health(request):
 
 api.add_router("/auth", auth_router)
 
-api.add_router("/catalog/marcas", marca_router, auth=auth)
 api.add_router("/catalog/categorias", categoria_router, auth=auth)
 api.add_router("/catalog/subcategorias", subcategoria_router, auth=auth)
 api.add_router("/catalog/produtos", produto_router, auth=auth)

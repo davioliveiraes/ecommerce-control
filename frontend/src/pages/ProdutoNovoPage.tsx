@@ -5,7 +5,7 @@ import { useForm, useFieldArray, FormProvider } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 import { createProdutoComVariacoes } from '../api/produtos'
-import { fetchMarcas } from '../api/marcas'
+import { fetchCategorias } from '../api/categorias'
 import { fetchSubcategorias } from '../api/subcategorias'
 import {
   produtoEditorSchema,
@@ -41,7 +41,10 @@ export function ProdutoNovoPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const marcasQuery = useQuery({ queryKey: ['marcas'], queryFn: fetchMarcas })
+  const categoriasQuery = useQuery({
+    queryKey: ['categorias'],
+    queryFn: fetchCategorias,
+  })
   const subcategoriasQuery = useQuery({
     queryKey: ['subcategorias'],
     queryFn: fetchSubcategorias,
@@ -54,7 +57,7 @@ export function ProdutoNovoPage() {
       nome_site: '',
       descricao_produto_gestaoclick: '',
       descricao_produto_site: '',
-      marca_id: null,
+      categoria_id: null,
       subcategoria_id: null,
       variacoes: [variacaoVazia],
     },
@@ -171,7 +174,7 @@ export function ProdutoNovoPage() {
         )}
 
         <ProdutoSection
-          marcas={marcasQuery.data || []}
+          categorias={categoriasQuery.data || []}
           subcategorias={subcategoriasQuery.data || []}
         />
 

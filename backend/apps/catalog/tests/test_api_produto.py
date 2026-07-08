@@ -2,16 +2,15 @@ from decimal import Decimal
 
 from django.test import TestCase
 
-from catalog.models import Marca, Categoria, Subcategoria, Produto
+from catalog.models import Categoria, Subcategoria, Produto
 from config.testing import create_authenticated_client
 
 
 class ProdutoAPITestCase(TestCase):
     def setUp(self):
         self.client, self.user = create_authenticated_client()
-        self.marca = Marca.objects.create(empresa=self.user.empresa, nome="GET", slug="get")
         self.categoria = Categoria.objects.create(empresa=self.user.empresa, nome="Fones", slug="fones")
-        self.subcategoria = Subcategoria.objects.create(empresa=self.user.empresa, 
+        self.subcategoria = Subcategoria.objects.create(empresa=self.user.empresa,
             nome="TWS", slug="tws", categoria=self.categoria,
         )
 
@@ -24,19 +23,32 @@ class ProdutoAPITestCase(TestCase):
         payload = {
             "nome_gestaoclick": "FONE GET",
             "nome_site": "FONE DE OUVIDO GET",
-            "marca_id": self.marca.id,
+            "categoria_id": self.categoria.id,
             "subcategoria_id": self.subcategoria.id,
         }
         response = self.client.post("/catalog/produtos/", json=payload)
         self.assertEqual(response.status_code, 201)
         data = response.json()
         self.assertEqual(data["nome_site"], "FONE DE OUVIDO GET")
-        self.assertEqual(data["marca_nome"], "GET")
+        self.assertEqual(data["categoria_nome"], "Fones")
         self.assertEqual(data["subcategoria_nome"], "TWS")
 
+    def test_create_produto_rejeita_subcategoria_de_outra_categoria(self):
+        outra_categoria = Categoria.objects.create(
+            empresa=self.user.empresa, nome="Cabos", slug="cabos"
+        )
+        payload = {
+            "nome_gestaoclick": "FONE GET",
+            "nome_site": "FONE DE OUVIDO GET",
+            "categoria_id": outra_categoria.id,
+            "subcategoria_id": self.subcategoria.id,
+        }
+        response = self.client.post("/catalog/produtos/", json=payload)
+        self.assertEqual(response.status_code, 400)
+
     def test_get_produto(self):
-        produto = Produto.objects.create(empresa=self.user.empresa, 
-            nome_gestaoclick="X", nome_site="Y", marca=self.marca,
+        produto = Produto.objects.create(empresa=self.user.empresa,
+            nome_gestaoclick="X", nome_site="Y", categoria=self.categoria,
         )
         response = self.client.get(f"/catalog/produtos/{produto.id}")
         self.assertEqual(response.status_code, 200)
