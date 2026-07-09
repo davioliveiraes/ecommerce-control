@@ -1,5 +1,5 @@
-from .categoria import CategoriaOut
-from .subcategoria import SubcategoriaOut
+from .categoria import CategoriaIn, CategoriaOut
+from .subcategoria import SubcategoriaIn, SubcategoriaOut
 from .produto import (
     ProdutoIn,
     ProdutoOut,
@@ -11,8 +11,8 @@ from .produto import (
 from .variacao import VariacaoIn, VariacaoOut, VariacaoPatch
 
 __all__ = [
-    "CategoriaOut",
-    "SubcategoriaOut",
+    "CategoriaIn", "CategoriaOut",
+    "SubcategoriaIn", "SubcategoriaOut",
     "ProdutoIn", "ProdutoOut", "ProdutoPatch",
     "ProdutoComVariacoesIn", "ProdutoComVariacoesOut", "VariacaoInComposto",
     "VariacaoIn", "VariacaoOut", "VariacaoPatch",

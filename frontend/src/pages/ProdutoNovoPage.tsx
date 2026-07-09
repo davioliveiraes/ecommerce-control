@@ -176,6 +176,7 @@ export function ProdutoNovoPage() {
         <ProdutoSection
           categorias={categoriasQuery.data || []}
           subcategorias={subcategoriasQuery.data || []}
+          permitirCriar
         />
 
         <div className="mt-8">

@@ -1,6 +1,11 @@
 from ninja import Schema
 
 
+class SubcategoriaIn(Schema):
+    nome: str
+    categoria_id: int
+
+
 class SubcategoriaOut(Schema):
     id: int
     nome: str
